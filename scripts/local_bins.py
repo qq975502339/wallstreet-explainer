@@ -7,7 +7,7 @@ from pathlib import Path
 
 _L = {}
 try:
-    _L = json.loads(Path(__file__).with_name('local.json').read_text(encoding='utf-8'))
+    _L = json.loads(Path(__file__).with_name('local.json').read_text(encoding='utf-8-sig'))
 except Exception:
     pass
 

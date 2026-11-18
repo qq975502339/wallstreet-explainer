@@ -18,7 +18,7 @@ clips.json：{"out": "film/assets/clips", "clips": {"jensen_gtc": ["src.mp4", 59
 - 原片里可能有一段数字静音（-80dB 以下），截进去会突然“断电”，听着像异响。
 - 抽帧的出点别压在镜头切点上，最后一帧会露出下一个镜头；停住时就停在这最后一帧上。
 """
-import json, subprocess, sys
+import json, os, subprocess, sys
 from pathlib import Path
 from local_bins import bin
 
@@ -43,9 +43,13 @@ elif cmd == 'sheet':
     f = Path(sys.argv[2]); a, b = opt('--from', 0.0, float), opt('--to', None, float); d = (b or ffdur(f)) - a
     step = opt('--step', max(1.0, round(d / 48, 1)), float); n = int(d / step) + 1; cols = 8; rows = (n + cols - 1) // cols
     Path('sheets').mkdir(exist_ok=True); out = Path('sheets') / f'{f.stem}_{int(a)}.jpg'
+    font = Path(os.environ.get('WINDIR', r'C:\Windows')) / 'Fonts' / 'arial.ttf'
+    if not font.exists(): font = Path('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf')
+    fp = str(font).replace('\\', '/').replace(':', '\\:')   # ffmpeg 滤镜里反斜杠是转义符，路径要用正斜杠
+    ff = f"fontfile='{fp}':" if font.exists() else ''   # 缺 fontconfig 的 Windows ffmpeg 不带 fontfile 会崩
     run([bin('ffmpeg'), '-v', 'error', '-y', '-ss', str(a), '-t', str(d), '-i', str(f), '-vf',
-         f"fps=1/{step},scale=320:-2,drawtext=text='%{{pts\\:hms}}':x=4:y=4:fontsize=18:fontcolor=yellow:box=1:boxcolor=black@0.6,tile={cols}x{rows}",
-         '-frames:v', '1', str(out)], stderr=subprocess.DEVNULL)
+         f"fps=1/{step},scale=320:-2,drawtext={ff}text='%{{pts\\:hms}}':x=4:y=4:fontsize=18:fontcolor=yellow:box=1:boxcolor=black@0.6,tile={cols}x{rows}",
+         '-frames:v', '1', str(out)], stderr=subprocess.DEVNULL, check=True)
     print(out, f'（时间码从 {a} 秒起算）')
 elif cmd == 'scenes':
     f = sys.argv[2]; a, b, th = opt('--from', 0.0, float), opt('--to', None, float), opt('--th', .3, float)

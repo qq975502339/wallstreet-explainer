@@ -53,6 +53,7 @@
 | 这句话在说什么 | 场景 | 最要紧的参数 |
 |---|---|---|
 | 一段真画面（人、地方、产品、发布会） | `footage` | `img` 或 `clip`，`push` `focus` `badge` |
+| 人物经历 / 创业故事 / 公司历史（bighead-collage 的 16:9 穿插段） | `footage` | `clip`（insert_bighead.py 收的）`badge` 把人带过来；字幕走 bite 分句 parts |
 | 这件事 = 这些画面（前景钉一个东西） | `montage` | `items` `pin` |
 | 两三样有画面的东西并列（芯片和数据中心） | `frames` | `items`（`label` `at`）`pin` `fill` |
 | 观众可能不信的数：给出处 | `article` | `img` + `hl`（截不到用 `mock`），`zoom` `hlAt` |
@@ -95,6 +96,10 @@
 
 **chain：一条因果链** `{scene:'chain', items:[{at, title, img 或 value, color, sub}]}`
 - 3–4 张竖卡一字排开，念到哪张亮哪张，箭头跟着画出来；镜头只慢推，适合放进 `host:'window'` 的板子里（一句话里连着说三四环，镜头追着跑会糊）。
+
+**人物故事穿插段（bighead-collage 委托）** `{scene:'footage', clip:'munger', until:'@s06', says, badge:{name:'芒格', color:'steel', at:'@bite_s05'}}`
+- 段落由 bighead-collage 做成 **16:9 横屏**、`insert_bighead.py` 收进主片（帧+音频+侧车），整屏穿插、演完切回，不是竖屏套窗。
+- 字幕走 bite 的分句 parts（脚本按 bighead 时间线自动生成），主片字幕风格贯穿全片；时刻用 `'@bite_<句id>'`（插段开口）对齐：铺垫镜演到插段开口，footage 镜放到下一句；`badge` 把上一镜的人带进去。完整工作流：`references/bighead_insert.md`。
 
 ## 镜头表怎么写
 

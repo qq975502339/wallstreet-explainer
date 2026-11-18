@@ -18,7 +18,7 @@ GIF 没有声音。片中新闻截图和实拍为引用，出处见 [CREDITS.md]
 
 - 有口播视频（真人或数字人），就围着人做：证据挂在人身后的墙上，讲细节时人缩到角上的小窗。
 - 没有口播视频，就把新闻里的当事人抠出来，站在大字前面。
-- 素材自己去视频网站找，新闻网页自己截，关键句刷黄。
+- 素材自己去视频网站找，空镜和气氛镜从 Pexels/Pixabay 免费图库下，新闻网页自己截，关键句刷黄。
 - 数字和钱的关系用大字、柱子、图表演出来。
 
 ## 安装
@@ -55,6 +55,8 @@ npm install && npx playwright install chromium
 | 逐字对齐太慢 | 用 N 卡跑 faster-whisper |
 | 字体不在 `fonts/` | 在 `scripts/local.json` 写 `"fonts_dir": "<路径>"` |
 | Playwright 装在别处 | 设环境变量 `PLAYWRIGHT_FROM` |
+| 想用 Pexels/Pixabay 图库 | 免费申请 key（[pexels.com/api](https://www.pexels.com/api/)、[pixabay.com/api/docs](https://pixabay.com/api/docs/)），写进 `scripts/local.json` 的 `pexels_api_key` / `pixabay_api_key`，用法见 `references/sourcing.md` |
+| 想生成比喻物件/纹理 | `scripts/local.json` 写 `qianwen_api_key`，用 `scripts/gen_image.py`（规矩 40：只演拍不到的具体比喻，写实的标"AI生成"） |
 
 ## 目录
 
