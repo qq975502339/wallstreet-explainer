@@ -145,3 +145,7 @@
 .k-chap b{display:block;font:150px var(--k-han);font-weight:normal;letter-spacing:.08em;color:#fff;text-shadow:0 8px 30px rgba(0,0,0,.8)}
 .k-chap span{display:block;font:90px var(--k-num);color:#e9d9a6;margin-top:14px;letter-spacing:.06em}
 .k-chap i{display:block;font:600 20px var(--k-en);letter-spacing:10px;color:rgba(255,255,255,.5);font-style:normal;margin-top:18px;text-transform:uppercase}
+
+/* 盖章（证据上的判决）：双边框印章，油墨感 */
+.k-stamp{position:absolute;font-family:Shu,'Alimama ShuHeiTi','Noto Sans SC',sans-serif;color:var(--sc);border:4px solid var(--sc);border-radius:8px;padding:.18em .5em .12em;letter-spacing:.18em;line-height:1.15;white-space:nowrap;opacity:.94}
+.k-stamp::after{content:'';position:absolute;inset:4px;border:1.5px solid var(--sc);border-radius:4px;opacity:.8}

@@ -78,7 +78,7 @@ function boardMake(p,c){
   nodes.forEach(n=>{const [cc,rr]=n.pos??[0,0];n.x??=960+(cc-cm)*gx;n.y??=CY+(rr-rm)*gy;});}
  else if(lay==='line'){const g=p.gap??540;nodes.forEach((n,i)=>{n.x??=960+(i-(Math.min(nodes.length,3)-1)/2)*g;n.y??=p.cy??540;});}
  const box=n=>{const [w,h]=sz(n);if(n.type==='area')return [n.x-(n.r??120),n.y-(n.r??120),n.x+(n.r??120),n.y+(n.r??120)];if(n.type==='pin')return [n.x-24,n.y-40,n.x+40+K.vw(n.label)*(n.size??38),n.y+40];if(n.type==='disc')return [n.x-n.r,n.y-n.r,n.x+n.r,n.y+n.r+(n.tag?n.r*.36+50:0)];
-  if(n.type==='event')return [n.x-n.w/2,n.y-n.h-190,n.x+n.w/2,n.y+120];
+  if(n.type==='event')return n.below?[n.x-n.w/2,n.y-140,n.x+n.w/2,n.y+n.h+150]:[n.x-n.w/2,n.y-n.h-190,n.x+n.w/2,n.y+120];
   if(n.type==='img')return [n.x-n.w/2,n.y-n.h/2-(n.label?80:0),n.x+n.w/2,n.y+n.h/2];
   return [n.x-w/2,n.y-h/2,n.x+w/2,n.y+h/2];};
  // ---- 连线 ----
@@ -151,9 +151,12 @@ function boardMake(p,c){
    let pulse=null;for(const lp of loops){const j=lp.ids.indexOf(l.id);if(j<0)continue;const u=(t-lp.t)/lp.d*lp.ids.length-j;if(u>0&&u<1)pulse=u;}
    const dimL=Math.max(dim[l.from].at(t),dim[l.to].at(t))*(1-fl);
    return {...pe,curve:l.curve??p.curve??0,color:l.color??p.lineColor??'gold',style:l.style??p.lineStyle??'dots',w,k,flow:(t-T0)*(26+fl*40),arrow:l.arrow??p.arrows??true,o:Math.min(vis[l.from].at(t),vis[l.to].at(t))*lerp(1,.35,dimL),pulse,text:l.text};});
+   // loop：从最后一张卡绕回第一张的回环箭头（"卖完再进下一批"），带标签
+   if(p.loop){const a=nodes[nodes.length-1],b=nodes[0],lt=c.at(p.loop.at)??T0+.6,k=E((t-lt)/.7);
+    if(k>0)es.push({a:[a.x,a.y+(a.h??150)/2+14],b:[b.x,b.y+(b.h??150)/2+14],curve:p.loop.curve??-.35,color:p.loop.color??'gold',style:'solid',w:5,k,arrow:true,text:p.loop.label,o:1});}
   let h='';
   if(axis!==false&&lay==='line'){const xs=nodes.map(n=>n.x),y=nodes[0].y;h+=`<div style="position:absolute;left:${f1(Math.min(...xs)-700)}px;top:${f1(y-2)}px;width:${f1(Math.max(...xs)-Math.min(...xs)+1400)}px;height:4px;background:linear-gradient(90deg,transparent,rgba(236,208,138,.75) 12%,rgba(236,208,138,.75) 88%,transparent);box-shadow:0 0 14px rgba(236,208,138,.5)"></div>`;}
-  if(p.under){const u=p.under;h+=`<img src="${u.img}" style="position:absolute;left:${f1(u.x??0)}px;top:${f1(u.y??0)}px;width:${f1(u.w??1920)}px;height:${f1(u.h??1080)}px;object-fit:cover;filter:brightness(${u.br??.6}) saturate(${u.sat??.8});opacity:${u.o??1}">`;}
+  if(p.under){const u=p.under;h+=typeof u.html==='function'?u.html(t):u.html??`<img src="${u.img}" style="position:absolute;left:${f1(u.x??0)}px;top:${f1(u.y??0)}px;width:${f1(u.w??1920)}px;height:${f1(u.h??1080)}px;object-fit:cover;filter:brightness(${u.br??.6}) saturate(${u.sat??.8});opacity:${u.o??1}">`;}
   h+=edges(es);
   const blurOf=n=>{if(p.dof===false||cc.s<1.15)return 0;const d=Math.hypot(n.x-cc.x,n.y-cc.y)*cc.s;return Math.min(1.8,Math.max(0,d-820)/260);};
   const order=[...nodes].sort((a,b)=>(nest[a.id]?1:0)-(nest[b.id]?1:0)||(a.type==='area'?-1:0)-(b.type==='area'?-1:0));
@@ -174,9 +177,9 @@ function boardMake(p,c){
     if(n.type==='area'){const ac=K.col(n.color??'gold'),r=n.r??120;return `<div style="position:absolute;left:${f1(x-r)}px;top:${f1(y-r)}px;width:${f1(2*r)}px;height:${f1(2*r)}px;border-radius:50%;background:radial-gradient(circle,${alpha(ac,.55)} 0%,${alpha(ac,.22)} 45%,${alpha(ac,0)} 70%);mix-blend-mode:screen;${K.fx(s2,'translate(0,0)')}"></div>`+(n.label?label({x,y:y+r*.15,text:n.label,en:n.en,size:n.size??40},s2):'');}
     if(n.type==='pin'){const pc=K.col(n.color??'gold');return `<div style="position:absolute;left:${f1(x-13)}px;top:${f1(y-13)}px;width:26px;height:26px;border-radius:50%;background:radial-gradient(circle,#fff 0 30%,${pc} 45%,${alpha(pc,0)} 72%);box-shadow:0 0 22px ${pc};${K.fx(s2,'translate(0,0)')}"></div>`+(n.label?`<div class="k-label" style="left:${f1(x+30)}px;top:${f1(y)}px;font-size:${n.size??38}px;${K.fx(s2,'translate(0,-50%)')}">${n.label}${n.en?`<i style="text-align:left">${n.en}</i>`:''}</div>`:'');}
     if(n.type==='person')return person({src:n.src,x,top:y,h:n.h},s2);
-    if(n.type==='event'){const yr=`<div class="k-year" style="left:${f1(x)}px;top:${f1(y+26)}px;font-size:${n.ysize??104}px;${K.fx(s2,'translate(-50%,0)')}">${n.year??''}</div>`;
+    if(n.type==='event'){const bl=!!n.below,yr=`<div class="k-year" style="left:${f1(x)}px;top:${f1(bl?y-(n.ysize??104)-14:y+26)}px;font-size:${n.ysize??104}px;${K.fx(s2,'translate(-50%,0)')}">${n.year??''}</div>`;
      const dot=`<div style="position:absolute;left:${f1(x-11)}px;top:${f1(y-11)}px;width:22px;height:22px;border-radius:50%;background:#f3e3b0;box-shadow:0 0 18px #f3d37a;opacity:${f3(oo)}"></div>`;
-     return dot+yr+(n.title?card({...q,y:y-n.h/2-56,color:n.color??p.color??'steel'},s2):'');}
+     return dot+yr+(n.title?card({...q,y:bl?y+n.h/2+96:y-n.h/2-56,color:n.color??p.color??'steel'},s2):'');}
     return '';};
    if(g>.003&&g<.997)h+=draw(false,o*(1-g))+draw(true,o*g);else h+=draw(g>=.997,o);
    const mk=marks[n.id];if(mk&&t>=mk.t){const q=appear(t,mk.t,.22,0),ms=n.type==='disc'?Math.max(44,n.r*.42)*sc:52;const [mx,my]=n.type==='disc'?[x+n.r*.74*sc,y-n.r*.74*sc]:[x+(n.w??200)/2-8,y-(n.h??100)/2+8];
@@ -201,12 +204,14 @@ K.scene('discs',{...boardDoc,need:['items'],says:'几家公司 / 几个人：一
  defaults:{type:'disc',layout:'row',pre:'gray',atDo:'light',maxZoom:1.3,pad:110},make:(p,c)=>{const n=arr(p.items).length,r=n<=2?190:n===3?170:n===4?150:n===5?132:112;return boardMake({...p,nodes:p.items.map(it=>({r,...it}))},c);}});
 K.scene('versus',{...boardDoc,need:['items'],says:'两样本该相配的东西按真实比例并排，差得离谱一眼可见（估值 vs 收入）',use:'反差：投入和回报、估值和收入、市值和利润',avoid:'差别不大（看不出来就别比）',
  defaults:{type:'disc',layout:'row',scale:'area',maxR:200,gap:150,atDo:'show'},make:(p,c)=>boardMake({...p,nodes:p.items},c)});
-K.scene('flow',{...boardDoc,says:'流程 / 结构：卡片和虚线箭头，一步步亮起，对的打勾、错的打叉',use:'一件事分几步、钱分几路、几个条件成不成立',avoid:'只是并列几样东西（用 discs）',
+K.scene('flow',{...boardDoc,says:'流程 / 结构：卡片和虚线箭头，一步步亮起，对的打勾、错的打叉；loop 画绕回起点的回环',use:'一件事分几步、钱分几路、几个条件成不成立、循环（卖完再进下一批）',avoid:'只是并列几样东西（用 discs）',
+ help:{...boardDoc.help,loop:"{label:'下一批豆子', at:'@b04:下一批'}：从最后一张卡底绕回第一张卡底的实线回环箭头，标签写在弧中点"},
  defaults:{type:'card',lineColor:'blue',pre:'gray',maxZoom:1.35},make:boardMake});
 K.scene('network',{...boardDoc,says:'关系网 / 资金循环：节点之间的流向，钱流到哪镜头跟到哪，"转了一圈"有亮点跑一圈',use:'谁投了谁、钱怎么转、几方之间的关系',avoid:'没有方向的并列（用 discs）',
  defaults:{type:'disc',layout:'ring',curve:.16,lineColor:'gold',maxZoom:1.45,pre:'gray'},make:boardMake});
-K.scene('timeline',{...boardDoc,says:'时间线：年份排在一条光轴上，念到哪年镜头推到哪年',use:'按时间讲几件事（发展史、几轮融资）',avoid:'只有两个时间点（用 versus 或 bars）',
- defaults:{type:'event',layout:'line',maxZoom:1.35,pad:110,pre:'gray'},make:boardMake});
+K.scene('timeline',{...boardDoc,says:'时间线：年份排在一条光轴上，念到哪年镜头推到哪年；alt 让卡片上下交替',use:'按时间讲几件事（发展史、几轮融资）',avoid:'只有两个时间点（用 versus 或 bars）',
+ help:{...boardDoc.help,alt:'true = 卡片在轴上下交替（偶数上、奇数下），年份始终贴轴；事件多的时候交替不挤'},
+ defaults:{type:'event',layout:'line',maxZoom:1.35,pad:110,pre:'gray'},make:(p,c)=>boardMake({...p,nodes:arr(p.nodes).map((n,i)=>p.alt?{...n,below:i%2===1}:n)},c)});
 
 // =====================================================================================
 // person：人站在巨字前面（当事人抠像 + 身后两组巨字 + 颜色光）
@@ -347,38 +352,44 @@ K.scene('chart',{
  says:'一条趋势（按年亏损、收入增长）画在白底图表卡上：线跟着话画出来，累计数跟着线滚',
  use:'按时间变化的一串数；"到 2030 年累计亏 2780 亿"这种按年累加',
  avoid:'只有一个数（number）；两三个数比大小（bars 更有冲击力）',
- need:['values'],
- help:{values:'[-50,-90,-140,...]：每个点的值（单位自己定，和 unit 一致）',x:"['2026','2027',...]：横轴标签，和 values 一样多",title:"图表标题：'OpenAI 累计净烧钱（预测）'",en:'标题下一行英文小字（以前叫 sub，还能用；number 的 sub 是另一回事：对比小卡）',
+ need:[],
+ help:{values:'[-50,-90,-140,...]：每个点的值（单位自己定，和 unit 一致）；写了 series 就不用 values',series:"[{v:[100,120,150,...], label:'收入', color:'green'}, {v:[60,85,120,...], label:'成本', color:'red'}]：多条线（剪刀差、交叉、缺口扩大）；第一条是主角（粗线、面积、累计数都跟它），右上角自动出图例。写了 series 就不用 values",x:"['2026','2027',...]：横轴标签，和 values 一样多",title:"图表标题：'OpenAI 累计净烧钱（预测）'",en:'标题下一行英文小字（以前叫 sub，还能用；number 的 sub 是另一回事：对比小卡）',
   kind:"'line'（默认）/'area' 线下面铺一层 / 'bar' 柱",color:"线的颜色：'red'（亏损，默认）/'green'/公司名",unit:"纵轴单位：'亿'",draw:"{at:'@b08:它还准备', until:'@b08:两千七百'}：线从第一个点画到最后一个点的时间",
   total:"{label:'累计净烧', from:'$0', to:'-$2780亿'}：跟着线滚的累计数，放在线让出来的那块空白里",mark:"[{at:'@b09:2030', i:4, text:'2030'}]：在第 i 个点上亮一下"},
  defaults:{kind:'area',color:'red'},minDur:1.8,flat:true,
  beats:p=>1+arr(p.mark).length,
- check(p,c){if(p.x&&p.x.length!==p.values.length)c.warn(`x 有 ${p.x.length} 个、values 有 ${p.values.length} 个，要一样多`);},
+ check(p,c){if(!p.series&&p.values==null)throw Error(`${c.tag}：chart 要 values 或 series`);if(p.series){const n0=arr(p.series)[0]?.v?.length;if(!n0)throw Error(`${c.tag}：series 第一条没有 v`);if(arr(p.series).some(s=>s.v.length!==n0))throw Error(`${c.tag}：series 每条线的点数要一样多`);if(p.x&&p.x.length!==n0)c.warn(`x 有 ${p.x.length} 个、series 有 ${n0} 个点，要一样多`);}
+  else if(p.x&&p.x.length!==p.values.length)c.warn(`x 有 ${p.x.length} 个、values 有 ${p.values.length} 个，要一样多`);},
  make(p,c){
-  const V=p.values,n=V.length,X=p.x??V.map((_,i)=>String(i+1)),cw=1340,ch=760,cx=960-cw/2,cy=96,pl=150,pr=80,pt=170,pb=96,pw=cw-pl-pr,ph=ch-pt-pb;
-  const lo=Math.min(0,...V),hi=Math.max(0,...V),tk=ticks(lo,hi,4),y0=tk[0],y1=tk[tk.length-1];
-  const px=i=>pl+(n===1?pw/2:i*pw/(n-1)),py=v=>pt+(y1-v)/(y1-y0||1)*ph,lc=K.col(p.color)==='#c63038'?'#d6343c':K.col(p.color);
+  // series：多条线（收入 vs 成本、剪刀差）；不写就是单条 values。第一条是主角（粗线 + 面积 + 累计数）
+  const SR=(p.series?arr(p.series):[{v:p.values}]).map((s,i)=>({...s,color:K.col(s.color??(p.color??['red','green','steel','gold'][i%4]))}));
+  const V=SR[0].v,n=V.length,X=p.x??V.map((_,i)=>String(i+1)),cw=1340,ch=760,cx=960-cw/2,cy=96,pl=150,pr=80,pt=170,pb=96,pw=cw-pl-pr,ph=ch-pt-pb;
+  const allV=SR.flatMap(s=>s.v),lo=Math.min(0,...allV),hi=Math.max(0,...allV),tk=ticks(lo,hi,4),y0=tk[0],y1=tk[tk.length-1];
+  const px=i=>pl+(n===1?pw/2:i*pw/(n-1)),py=v=>pt+(y1-v)/(y1-y0||1)*ph,lc=SR[0].color==='#c63038'?'#d6343c':SR[0].color;
   const d0=c.at(p.draw?.at)??c.t0+.35,d1=c.at(p.draw?.until)??Math.min(c.t1-.4,d0+1.6),marks=arr(p.mark).map(m=>({...m,t:c.at(m.at)}));
   const desc=V[n-1]<V[0],tot=p.total?{l:p.total.label,a:num(p.total.from??0),b:num(p.total.to)}:null;
   const keys=[{t:c.t0,cam:{x:960,y:520,s:.94}},{t:c.t0,cam:{x:960,y:500,s:1},d:.8}];
   const cam=camSeq(keys,.02);
+  const legend=SR.length>1?SR.map((s,i)=>`<div style="position:absolute;right:${pr+10}px;top:${44+i*46}px;display:flex;align-items:center;gap:12px;font:32px ${FAM.han};color:#4a4d55;letter-spacing:.06em"><span style="width:36px;height:7px;border-radius:4px;background:${s.color}"></span>${s.label??`线${i+1}`}</div>`).join(''):'';
   const grid=tk.map(v=>`<line x1="${pl}" x2="${pl+pw}" y1="${f1(py(v))}" y2="${f1(py(v))}" stroke="${v===0?'#9a9ea6':'#cfd2d8'}" stroke-width="${v===0?2.5:1.6}" ${v===0?'':'stroke-dasharray="7 8"'}/><text x="${pl-18}" y="${f1(py(v)+7)}" text-anchor="end" font-family="${FAM.en}" font-weight="600" font-size="21" fill="#9a9ea6">${v}${p.unit??''}</text>`).join('')+
    X.map((l,i)=>`<text x="${f1(px(i))}" y="${pt+ph+52}" text-anchor="middle" font-family="${FAM.en}" font-weight="600" font-size="24" fill="#7d828b">${l}</text>`).join('');
   return t=>{
    const cc=cam(t),cp=cam(t-1/30),k=E((t-d0)/Math.max(.2,d1-d0)),u=k*(n-1),j=Math.min(n-2,Math.floor(u)),fr=u-j;
-   const pts=[];for(let i=0;i<n;i++){if(i<=u)pts.push([px(i),py(V[i])]);}if(n>1&&u<n-1&&u>0)pts.push([px(j)+(px(j+1)-px(j))*fr,py(V[j]+(V[j+1]-V[j])*fr)]);
-   const head=pts[pts.length-1]??[px(0),py(V[0])];
    let svg='';
    if(p.kind==='bar'){const bw=Math.min(90,pw/n*.5);V.forEach((v,i)=>{const g=E((t-d0-i*(d1-d0)/n*.7)/.5),yv=py(0)+(py(v)-py(0))*g;svg+=`<rect x="${f1(px(i)-bw/2)}" y="${f1(Math.min(yv,py(0)))}" width="${f1(bw)}" height="${f1(Math.abs(yv-py(0)))}" rx="6" fill="${lc}"/>`;});}
-   else if(pts.length>1){const d=pts.map((q,i)=>`${i?'L':'M'}${f1(q[0])} ${f1(q[1])}`).join(' ');
-    if(p.kind==='area')svg+=`<path d="${d} L${f1(head[0])} ${f1(py(0))} L${f1(pts[0][0])} ${f1(py(0))} Z" fill="url(#ka)" opacity=".9"/>`;
-    svg+=`<path d="${d}" fill="none" stroke="${lc}" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>`;}
-   if(p.kind!=='bar'&&t>=d0)svg+=`<circle cx="${f1(head[0])}" cy="${f1(head[1])}" r="12" fill="${lc}" stroke="#fff" stroke-width="4"/><circle cx="${f1(head[0])}" cy="${f1(head[1])}" r="26" fill="${lc}" opacity=".18"/>`;
+   else SR.forEach((s,si)=>{
+    const pts=[];for(let i=0;i<n;i++){if(i<=u)pts.push([px(i),py(s.v[i])]);}if(n>1&&u<n-1&&u>0)pts.push([px(j)+(px(j+1)-px(j))*fr,py(s.v[j]+(s.v[j+1]-s.v[j])*fr)]);
+    if(pts.length<2)return;
+    const head=pts[pts.length-1],d=pts.map((q,i)=>`${i?'L':'M'}${f1(q[0])} ${f1(q[1])}`).join(' '),cl=si===0?lc:s.color;
+    if(p.kind==='area'&&si===0)svg+=`<path d="${d} L${f1(head[0])} ${f1(py(0))} L${f1(pts[0][0])} ${f1(py(0))} Z" fill="url(#ka)" opacity=".9"/>`;
+    svg+=`<path d="${d}" fill="none" stroke="${cl}" stroke-width="${si===0?7:5.5}" stroke-linejoin="round" stroke-linecap="round"/>`;
+    if(t>=d0)svg+=`<circle cx="${f1(head[0])}" cy="${f1(head[1])}" r="${si===0?12:9}" fill="${cl}" stroke="#fff" stroke-width="${si===0?4:3}"/>${si===0?`<circle cx="${f1(head[0])}" cy="${f1(head[1])}" r="26" fill="${cl}" opacity=".18"/>`:''}`;
+   });
    for(const m of marks){if(t<m.t)continue;const q=appear(t,m.t,.25,0),mx=px(m.i),my=py(V[m.i]);svg+=`<g opacity="${f3(q.o)}"><circle cx="${f1(mx)}" cy="${f1(my)}" r="17" fill="none" stroke="${lc}" stroke-width="4"/>${m.text?`<text x="${f1(mx)}" y="${f1(my-30)}" text-anchor="middle" font-family="${FAM.han}" font-size="30" fill="#2a2c31">${m.text}</text>`:''}</g>`;}
    let tt='';if(tot&&t>=d0-.05){const val=lerp(tot.a.n*(tot.a.neg?-1:1),tot.b.n*(tot.b.neg?-1:1),k),pv={...tot.b,neg:val<0,n:Math.abs(val)};
     tt=`<div style="position:absolute;${desc?`right:${pr+10}px`:`left:${pl+30}px`};top:${pt-6}px;text-align:${desc?'right':'left'}"><div style="font:32px ${FAM.han};color:#4a4d55;letter-spacing:.08em">${tot.l??''}</div><div class="k-num ${val<0||p.color==='red'?'red':''}" style="position:relative;font-size:118px;margin-top:6px;filter:none;justify-content:${desc?'flex-end':'flex-start'}">${K.numHTML(pv,{fixed:true})}</div></div>`;}
    const su=c.enter==='flat'?E((t-c.t0-.3)/.55):1;   // 接 flat：上一镜倒成桌面，图表从桌面上立起来
-   const card=`<div class="k-chart" style="left:${cx}px;top:${cy}px;width:${cw}px;height:${ch}px;transform-origin:50% 100%;transform:translateY(${f1((1-su)*420)}px) perspective(2400px) rotateX(${f1((1-su)*26)}deg) rotateY(-2deg);opacity:${f3(C(su*2.2))}">${p.title?`<div class="ct">${p.title}</div>`:''}${(p.en??p.sub)?`<div class="cs">${p.en??p.sub}</div>`:''}<svg width="${cw}" height="${ch}" style="position:absolute;left:0;top:0"><defs><linearGradient id="ka" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${lc}" stop-opacity="${desc?.06:.32}"/><stop offset="1" stop-color="${lc}" stop-opacity="${desc?.32:.04}"/></linearGradient></defs>${grid}${svg}</svg>${tt}</div>`;
+   const card=`<div class="k-chart" style="left:${cx}px;top:${cy}px;width:${cw}px;height:${ch}px;transform-origin:50% 100%;transform:translateY(${f1((1-su)*420)}px) perspective(2400px) rotateX(${f1((1-su)*26)}deg) rotateY(-2deg);opacity:${f3(C(su*2.2))}">${p.title?`<div class="ct">${p.title}</div>`:''}${(p.en??p.sub)?`<div class="cs">${p.en??p.sub}</div>`:''}<svg width="${cw}" height="${ch}" style="position:absolute;left:0;top:0"><defs><linearGradient id="ka" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${lc}" stop-opacity="${desc?.06:.32}"/><stop offset="1" stop-color="${lc}" stop-opacity="${desc?.32:.04}"/></linearGradient></defs>${grid}${svg}</svg>${tt}${legend}</div>`;
    return c.bg(t,cc,cp,{tone:p.tone,glow:p.glow})+L(cc,cp,1,card);
   };
  }
@@ -444,11 +455,13 @@ K.scene('share',{
  avoid:'超过 5 块（合并成"其他"）；要比几个整体的大小（用 versus）',
  need:['parts'],
  help:{parts:"[{label:'流通股', value:30, color:'gold'}, {label:'大股东', value:70, color:'gray'}]：value 是占比（加起来不用正好 100）",focus:"[{at:'@b05:三成', i:0}]：讲到哪一块",
-  center:"{value:'30%', label:'流通'}：环中间的字（不写就显示讲到的那一块）",title:'环上方一行眉题'},
+  pie:'true = 实心饼（不要环心）',hole:'环心比例 0..1（默认 .41；0 = 实心饼，.6 = 细环）',legend:'true = 图例（色块+名字+百分比）放右边一列，环左移；不写 = 标签绕环',
+  center:"{value:'30%', label:'流通'}：环中间的字（不写就显示讲到的那一块；实心饼没有中间）",title:'环上方一行眉题'},
  defaults:{tone:'navy'},minDur:1.6,
  beats:p=>arr(p.focus).length,
  make(p,c){
-  const P=arr(p.parts),sum=P.reduce((a,b)=>a+(+b.value),0),R=290,W=118,CX=960,CY=470,foc=arr(p.focus).map(f=>({...f,t:c.at(f.at)})).sort((a,b)=>a.t-b.t);
+  // pie:true 实心饼；hole:0..1 环的厚度比例（默认 .41 的厚环）；legend:true 图例放右边（环左移）
+  const P=arr(p.parts),sum=P.reduce((a,b)=>a+(+b.value),0),R=290,inner=p.pie?0:(p.hole!=null?R*p.hole:R-118),W=R-inner,leg=!!p.legend,CX=leg?700:960,CY=470,foc=arr(p.focus).map(f=>({...f,t:c.at(f.at)})).sort((a,b)=>a.t-b.t);
   let a0=-90;const seg=P.map(q=>{const a=360*q.value/sum,s={...q,a0,a1:a0+a};a0+=a;return s;});
   const cam=camSeq([{t:c.t0,cam:{x:960,y:520,s:.93}},{t:c.t0,cam:{x:960,y:500,s:1},d:.8}],.02);
   const arc=(r1,r2,b0,b1)=>{const A=d=>d*Math.PI/180,p1=(r,d)=>[CX+r*Math.cos(A(d)),CY+r*Math.sin(A(d))],lg=b1-b0>180?1:0,[x1,y1]=p1(r2,b0),[x2,y2]=p1(r2,b1),[x3,y3]=p1(r1,b1),[x4,y4]=p1(r1,b0);
@@ -460,8 +473,10 @@ K.scene('share',{
     const dm=cur&&!on?lerp(1,.38,fk):1;
     svg+=`<g transform="translate(${f1(Math.cos(mid)*off)} ${f1(Math.sin(mid)*off)})" style="filter:brightness(${f3(dm)}) saturate(${f3(cur&&!on?lerp(1,.5,fk):1)})"><path d="${arc(R-W,R,s.a0,b1)}" fill="url(#sg${i})" stroke="rgba(255,255,255,.35)" stroke-width="2"/></g>
      <defs><radialGradient id="sg${i}" cx="${CX}" cy="${CY}" r="${R}" gradientUnits="userSpaceOnUse"><stop offset="${f3((R-W)/R)}" stop-color="${mixc(cl,'#000',.35)}"/><stop offset=".9" stop-color="${cl}"/><stop offset="1" stop-color="${mixc(cl,'#fff',.3)}"/></radialGradient></defs>`;
-    if(sw>=360){const lx=CX+Math.cos(mid)*(R+90+off),ly=CY+Math.sin(mid)*(R+70+off),lo=C((t-c.t0-.9)/.3)*dm;svg+=`<g opacity="${f3(lo)}"><text x="${f1(lx)}" y="${f1(ly)}" text-anchor="${Math.cos(mid)>.2?'start':Math.cos(mid)<-.2?'end':'middle'}" font-family="${FAM.han}" font-size="40" fill="#f1ead2">${s.label??''}</text><text x="${f1(lx)}" y="${f1(ly+58)}" text-anchor="${Math.cos(mid)>.2?'start':Math.cos(mid)<-.2?'end':'middle'}" font-family="${FAM.num}" font-size="56" fill="#f3e3b0">${Math.round(100*s.value/sum)}%</text></g>`;}}
-   const ce=p.center??(cur?{value:`${Math.round(100*P[cur.i].value/sum)}%`,label:P[cur.i].label}:null);
+    if(sw>=360&&!leg){const lx=CX+Math.cos(mid)*(R+90+off),ly=CY+Math.sin(mid)*(R+70+off),lo=C((t-c.t0-.9)/.3)*dm;svg+=`<g opacity="${f3(lo)}"><text x="${f1(lx)}" y="${f1(ly)}" text-anchor="${Math.cos(mid)>.2?'start':Math.cos(mid)<-.2?'end':'middle'}" font-family="${FAM.han}" font-size="40" fill="#f1ead2">${s.label??''}</text><text x="${f1(lx)}" y="${f1(ly+58)}" text-anchor="${Math.cos(mid)>.2?'start':Math.cos(mid)<-.2?'end':'middle'}" font-family="${FAM.num}" font-size="56" fill="#f3e3b0">${Math.round(100*s.value/sum)}%</text></g>`;}}
+   if(leg&&sw>=360)seg.forEach((s,i)=>{const on=cur&&cur.i===i,cl=K.col(s.color??['gold','steel','teal','wine','slate'][i%5]),lo=C((t-c.t0-.9)/.3)*(cur&&!on?lerp(1,.45,fk):1);
+    svg+=`<g opacity="${f3(lo)}"><rect x="1180" y="${300+i*96}" width="34" height="34" rx="7" fill="${cl}"/><text x="1234" y="${328+i*96}" font-family="${FAM.han}" font-size="40" fill="#f1ead2">${s.label??''}</text><text x="1720" y="${328+i*96}" text-anchor="end" font-family="${FAM.num}" font-size="52" fill="#f3e3b0">${Math.round(100*s.value/sum)}%</text></g>`;});
+   const ce=inner>0?(p.center??(cur?{value:`${Math.round(100*P[cur.i].value/sum)}%`,label:P[cur.i].label}:null)):null;
    let h=`<svg class="k-full" width="1920" height="1080" style="overflow:visible">${svg}</svg>`;
    if(ce){const q=cur?appear(t,cur.t,.3,0):appear(t,c.t0+.6,.3,0);h+=bignum({x:CX,y:CY-6,value:ce.value,size:150},{o:q.o})+label({x:CX,y:CY+82,text:ce.label??'',size:34},{o:q.o});}
    const bw=browOf(p.title,p.en);if(bw)h+=brow({x:960,y:CY-R-128,zh:bw.zh,en:bw.en});
@@ -525,7 +540,9 @@ K.scene('article',{
  help:{img:'原文截图（snap_news.mjs 截的，宽一点没关系）',hl:'[[x,y,w,h],...]：截图上要刷黄的框。snap_news.mjs 打印的框直接用（它的截图是 3200 宽、框按 1600 宽的网页坐标，模板会换算）；别的截图写图片像素；折行就给两段',
   mock:"{source:'报道', date:'2026-10-02', title:'OpenAI 预计到 2030 年累计烧掉约 2800 亿美元', body:['第一段……','第二段……'], mark:'2800 亿美元'}：截不到原文时用核实过的文字排一页（通用样式，不放任何真实网站的标志）",
   zoom:"'@b08:两千七百'：镜头开始推向刷黄处的时刻（默认这一镜过了三成）",hlAt:'荧光笔刷过的时刻（默认镜头快推到位的时候）',
-  cssW:'hl 按多宽的网页坐标算（一般不用写：3200 宽的截图按 1600，别的按图片宽）',tilt:'截图斜几度（默认 -1.2；0 = 摆正）'},
+  cssW:'hl 按多宽的网页坐标算（一般不用写：3200 宽的截图按 1600，别的按图片宽）',tilt:'截图斜几度（默认 -1.2；0 = 摆正）',
+  stamp:"{text:'谣言'|'官方'|'已核实', at:'@b08:假的', color:'red'|'green', x?, y?}：刷黄之后在页面上盖章（判决那一下，快、不弹）；x/y 是页面坐标，默认右上角",
+  scribble:"{at, kind:'circle'|'under'|'arrow', color}：荧光笔之外的第二种标注——手绘圈把刷黄那句圈出来（默认 circle、红）"},
  defaults:{tone:'navy'},minDur:1.8,
  beats:()=>2,
  check(p,c){if(!p.img&&!p.mock)throw Error(`${c.tag}：article 要 img（原文截图）或 mock（自己排一页）`);if(p.img&&!p.hl)c.warn('有截图没给 hl：不知道刷哪一句');if(p.mock&&p.mock.mark&&![p.mock.title,...arr(p.mock.body)].some(x=>String(x).includes(p.mock.mark)))throw Error(`${c.tag}：mock.mark「${p.mock.mark}」要原样出现在 title 或 body 里`);},
@@ -546,6 +563,7 @@ K.scene('article',{
   // 页面绕自己的中心斜一点：页面上的点 → 世界坐标
   const ang=tilt*Math.PI/180,W2=(u,v)=>{const dx=u-PW/2,dy=v-PH/2;return [X0+PW/2+dx*Math.cos(ang)-dy*Math.sin(ang),Y0+PH/2+dx*Math.sin(ang)+dy*Math.cos(ang)];};
   const [zx,zy]=W2((zb[0]+zb[2])/2,(zb[1]+zb[3])/2),tz=Math.max(c.t0+.3,c.at(p.zoom)??c.t0+c.d*.3),th=c.at(p.hlAt)??tz+.6;
+  const stT=p.stamp?(c.at(p.stamp.at)??th+.5):null,scT=p.scribble?(c.at(p.scribble.at)??th+.35):null;
   if(c.t1-(th+.45)<1)c.warn(`刷黄以后只停了 ${Math.max(0,c.t1-th-.45).toFixed(1)} 秒就切走：证据至少停 1 秒（zoom / hlAt 提前，或者 until 往后）`);
   // 机位：先看整页的上半（两边露出织物）→ 推向刷黄的那一句，停下来以后慢慢往里推
   const sA=Math.min(.92,1680/PW),camA={x:960,y:Y0+480/sA,s:sA},camZ={x:zx,y:zy,s:p.zoomS??Math.max(1.2,Math.min(1.8,1100/(zb[2]-zb[0]+300)))};   // zoomS：推近到几倍（默认按刷黄那句的宽度算）
@@ -554,7 +572,9 @@ K.scene('article',{
    const cc=cam(t),cp=cam(t-1/30),hk=C((t-th)/.45),zk=IO((t-tz)/1.05);
    let inner=p.img?`<img src="${p.img}" style="position:absolute;left:0;top:0;width:${PW}px;height:${f1(PH)}px">`:page.replace(/<u data-k><\/u>/g,`<u style="transform:scaleX(${f3(hk)})"></u>`);
    if(p.img)for(const [x,y,w,h] of boxes)inner+=`<div style="position:absolute;left:${f1(x-4)}px;top:${f1(y)}px;width:${f1((w+8)*hk)}px;height:${f1(h)}px;background:#ffd84a;mix-blend-mode:multiply"></div>`;
-   const pg=`<div class="k-page" style="left:${X0}px;top:${Y0}px;width:${PW}px;height:${f1(PH)}px;transform:rotate(${f3(tilt)}deg)">${inner}</div>`;
+   const pg=(()=>{if(scT!=null&&t>=scT)inner+=K.scribble({x:zb[0]-16,y:zb[1]-14,w:zb[2]-zb[0]+32,h:zb[3]-zb[1]+28,kind:p.scribble.kind??'circle',color:p.scribble.color??'red',seed:3,k:C((t-scT)/.5)});
+    if(stT!=null&&t>=stT){const q=E(C((t-stT)/.22));inner+=K.stamp({x:p.stamp.x??zb[2]+170,y:p.stamp.y??zb[1]-60,text:p.stamp.text,color:p.stamp.color??'red',size:p.stamp.size??110,rot:lerp(-16,-8,q)},{o:C((t-stT)/.18),sc:lerp(1.7,1,q)});}
+    return `<div class="k-page" style="left:${X0}px;top:${Y0}px;width:${PW}px;height:${f1(PH)}px;transform:rotate(${f3(tilt)}deg)">${inner}</div>`;})();
    const vig=`<div class="k-full" style="z-index:40;background:radial-gradient(ellipse 70% 66% at 50% 47%,transparent ${f1(lerp(44,32,zk))}%,rgba(4,7,12,${f3(lerp(.62,.78,zk))}) 100%)"></div>`;
    return c.bg(t,cc,cp,{tone:p.tone,glow:p.glow})+L(cc,cp,1,pg,{mb:false})+vig;
   };
@@ -604,7 +624,7 @@ K.scene('desk',{
  use:'几家公司各自的新闻、几篇报道一起说明一件事（截图的标题里写着公司名和金额，身份自己说清）',
  avoid:'截图上的字太小、看不出是哪家（换截图或用 discs）；只有一篇（用 article）',
  need:['items'],
- help:{items:"[{img:'assets/img/news_goog.png', at:'@b02:谷歌', hl:[[x,y,w,h]]}, ...]：2–5 张截图；hl 是这张上要刷黄的框（坐标和 article 一样：snap_news.mjs 打印的直接用）",
+ help:{items:"[{img:'assets/img/news_goog.png', at:'@b02:谷歌', hl:[[x,y,w,h]]}, ...]：2–5 张截图；hl 是这张上要刷黄的框（坐标和 article 一样：snap_news.mjs 打印的直接用）；每张还可写 stamp:{text,at,color}（盖章）和 scribble:{at,kind,color}（手绘圈注，圈它的 hl）",
   all:"'@b02:这四家'：抬高机位看全部",read:"{i:1, at:'@b03:两百亿'}：念到证据时桌面抬平、推近看第 i 张（从 0 数），刷黄它的 hl",
   tilt:'桌面倾角（默认 54°；50–58 之间最像）'},
  defaults:{tone:'navy'},minDur:1.6,
@@ -634,7 +654,11 @@ K.scene('desk',{
    let docs='';
    for(const it of I){const lit=all||(cur?cur.i===it.i:it.i===0),on=rd&&rd.i===it.i;let b=lit?1:.5;if(rd)b=lerp(b,on?1:.36,rk);
     let hl='';if(on&&hk>0)for(const [x,y,w,h] of it.hl)hl+=`<div style="position:absolute;left:${f1(x-4)}px;top:${f1(y)}px;width:${f1((w+8)*hk)}px;height:${f1(h)}px;background:#ffd84a;mix-blend-mode:multiply"></div>`;
-    docs+=`<div style="position:absolute;left:${f1(it.x-it.w/2)}px;top:${f1(it.y-it.h/2)}px;width:${it.w}px;height:${it.h}px;transform:rotate(${it.rot}deg);background:#fff;overflow:hidden;box-shadow:0 30px 60px rgba(0,0,0,.6);filter:brightness(${f3(b)})"><img src="${it.img}" style="position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;object-position:50% 0">${hl}</div>`;}
+    if(it.scribble){const st2=c.at(it.scribble.at)??(rd?rd.t+.5:c.t0+1);if(t>=st2){const bx=it.hl.length?K.unionBox(it.hl.map(([a,b,w2,h2])=>[a,b,a+w2,b+h2])):[it.w*.1,it.h*.1,it.w*.9,it.h*.3];
+      hl+=K.scribble({x:bx[0]-14,y:bx[1]-12,w:bx[2]-bx[0]+28,h:bx[3]-bx[1]+24,kind:it.scribble.kind??'circle',color:it.scribble.color??'red',seed:5,k:C((t-st2)/.5)});}}
+     if(it.stamp){const st3=c.at(it.stamp.at)??(rd?rd.t+.7:c.t0+1.2);if(t>=st3){const q=E(C((t-st3)/.22));
+      hl+=K.stamp({x:it.stamp.x??it.w-230,y:it.stamp.y??150,text:it.stamp.text,color:it.stamp.color??'red',size:it.stamp.size??96,rot:lerp(-16,-8,q)},{o:C((t-st3)/.18),sc:lerp(1.7,1,q)});}}
+     docs+=`<div style="position:absolute;left:${f1(it.x-it.w/2)}px;top:${f1(it.y-it.h/2)}px;width:${it.w}px;height:${it.h}px;transform:rotate(${it.rot}deg);background:#fff;overflow:hidden;box-shadow:0 30px 60px rgba(0,0,0,.6);filter:brightness(${f3(b)})"><img src="${it.img}" style="position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;object-position:50% 0">${hl}</div>`;}
    const plane=`<div class="k-full" style="perspective:${P}px;perspective-origin:960px ${CY}px;z-index:20"><div style="position:absolute;left:960px;top:${CY}px;width:0;height:0;transform-style:preserve-3d;transform:translateZ(${f1(cm.dz)}px) rotateX(${f3(cm.rx)}deg) translate(${f1(-cm.fx)}px,${f1(-cm.fy)}px)">${docs}</div></div>`;
    const vig=`<div class="k-full" style="z-index:30;background:radial-gradient(ellipse 76% 72% at 50% ${f1(lerp(40,47,rk))}%,transparent 42%,rgba(4,7,12,.7) 100%)"></div>`;
    const cc={x:960,y:540,s:1+.01*(t-c.t0)};
@@ -953,18 +977,23 @@ K.scene('compare',{
  use:'"英伟达 vs AMD"、"十年前 vs 现在"，比两到四项',
  avoid:'超过 4 行（挑最要紧的）；只比一项（用 versus 或 bars）',
  need:['left','right','rows'],
- help:{left:"{title:'英伟达', color:'nvidia'}",right:"{title:'AMD', color:'red'}",rows:"[{label:'市值', left:'$5.2万亿', right:'$3000亿', win:'left', at:'@b05:市值'}, ...]：win 写 'left'/'right'（不写就不分输赢）",brow:'表头上面一行眉题（可省）',size:'数字字号（默认 110）'},
+ help:{left:"{title:'英伟达', color:'nvidia', value:'40', sub:'一杯拿铁', pts:[{s:'一天卖 200 杯', at:'@b05:两百杯'}]}：写 value 就在表头下立大数 + 小字 + 最多 3 条要点（不写就是纯表头）",right:"同 left",rows:"[{label:'市值', left:'$5.2万亿', right:'$3000亿', win:'left', at:'@b05:市值'}, ...]：win 写 'left'/'right'（不写就不分输赢）",brow:'表头上面一行眉题（可省）',size:'数字字号（默认 110）'},
  defaults:{tone:'navy'},minDur:2,
  beats:p=>arr(p.rows).filter(r=>r.at).length,
- check(p,c){if(arr(p.rows).length>4)c.warn(`比了 ${arr(p.rows).length} 行：挑最要紧的 4 行以内`);},
+ check(p,c){if(arr(p.rows).length>4)c.warn(`比了 ${arr(p.rows).length} 行：挑最要紧的 4 行以内`);for(const s of [p.left,p.right])if(arr(s?.pts).length>3)c.warn('一边 pts 超过 3 条：挑最要紧的');},
  make(p,c){
-  const bw=browOf(p.brow,p.en),HY=bw?250:200,rh=150,Y0=HY+130,XL=600,XR=1320,NS=p.size??110;
+  const bw=browOf(p.brow,p.en),HY=bw?250:200,rh=150,hasV=p.left?.value!=null||p.right?.value!=null,Y0=HY+(hasV?470:130),XL=600,XR=1320,NS=p.size??110;
   const R=arr(p.rows).map((r,i)=>({...r,i,y:Y0+i*rh+60,t:c.at(r.at)??c.t0+.3+i*.15})),n=R.length;
   const f0=fit([300,HY-(bw?180:80),1620,Y0+(n-1)*rh+130],{max:1.1});
   const cam=camSeq([{t:c.t0,cam:{...f0,s:f0.s*.95}},{t:c.t0,cam:f0,d:.9}],.022);
-  const head=(o,x)=>card({x,y:HY,w:560,h:128,color:o.color??'steel',title:o.title,en:o.en,size:54},{});
+  // 表头带 value 时：下面立大数 + 一行小字 + 最多三条要点（vs6 的写法，换成本项目的玻璃/金字语言）
+  const head=(o,x,t)=>{let h=card({x,y:HY,w:560,h:128,color:o.color??'steel',title:o.title,en:o.en,size:54},{});
+   if(o.value!=null){h+=bignum({x,y:HY+170,value:o.value,size:130,color:'gold'},{});
+    if(o.sub)h+=label({x,y:HY+262,text:o.sub,size:32},{o:.85});
+    arr(o.pts).forEach((q,i)=>{const ta=c.at(q.at)??c.t0+.6+i*.5,a=appear(t,ta,.25,10);if(a.o>0)h+=label({x,y:HY+330+i*62,text:'· '+q.s,size:34},{o:a.o,dy:a.dy});});}
+   return h;};
   return t=>{
-   const cc=cam(t),cp=cam(t-1/30);let h=head(p.left,XL)+head(p.right,XR)+`<div style="position:absolute;left:960px;top:${HY}px;transform:translate(-50%,-50%);font:88px ${FAM.num};color:#e8d39a;text-shadow:0 4px 14px rgba(0,0,0,.6)">VS</div>`;
+   const cc=cam(t),cp=cam(t-1/30);let h=head(p.left,XL,t)+head(p.right,XR,t)+`<div style="position:absolute;left:960px;top:${HY}px;transform:translate(-50%,-50%);font:88px ${FAM.num};color:#e8d39a;text-shadow:0 4px 14px rgba(0,0,0,.6)">VS</div>`;
    if(bw)h+=brow({x:960,y:HY-170,zh:bw.zh,en:bw.en},{o:appear(t,c.t0,.3,0).o});
    for(const r of R){const a=appear(t,r.t,.25,12);if(a.o<=0)continue;const y=r.y,wk=r.win?E((t-r.t-.25)/.3):0;
     h+=`<div style="position:absolute;left:300px;top:${f1(y-rh/2+8)}px;width:1320px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);opacity:${f3(a.o)}"></div>`;
@@ -1077,12 +1106,30 @@ K.scene('device',{
 // =====================================================================================
 // map：示意地图（点阵世界地图，只有陆地、不画国界），按经纬度标点、画航线，念到哪里镜头飞到哪里
 // =====================================================================================
+// 国家中心（经纬度）：countries 模式自动补标签 pin 用；没有的国家写 nodes 自己标
+const MAPCEN={BRA:[-52,-10],VNM:[106,16],USA:[-98,39],CHN:[104,35],DEU:[10,51],JPN:[138,36],GBR:[-2,54],FRA:[2,46],IND:[79,22],RUS:[90,60],AUS:[134,-25],CAN:[-106,56],KOR:[127.8,36.5],SAU:[45,24],ZAF:[25,-29],MEX:[-102,24],IDN:[118,-2],TUR:[35,39],ITA:[12.5,42.5],ESP:[-4,40],NLD:[5.3,52.2],CHE:[8.2,46.8],SGP:[103.8,1.35],ARE:[54,24],EGY:[30,26],NGA:[8,10],KEN:[38,.5],ARG:[-64,-34],CHL:[-71,-35],PER:[-75,-10],COL:[-74,4],UKR:[32,49],POL:[19,52],SWE:[15,62],NOR:[9,61],FIN:[26,64],DNK:[10,56],AUT:[14,47.5],BEL:[4.5,50.8],PRT:[-8,39.5],GRC:[22,39],IRN:[53,32],IRQ:[44,33],PAK:[69,30],BGD:[90,24],THA:[101,15],MYS:[102,4],PHL:[122,12],NZL:[172,-41],TWN:[121,23.7]};
 K.scene('map',{...boardDoc,
- says:'示意地图：点阵世界地图（只有陆地、不画国界），按经纬度标点、画航线，念到哪里镜头飞到哪里',
- use:'国家、城市之间的事：贸易、石油、钱流向哪、工厂在哪',
+ says:'示意地图：默认点阵世界地图（只有陆地、不画国界）；style:\'countries\' 换矢量国界+按国家填色。按经纬度标点、画航线，念到哪里镜头飞到哪里',
+ use:'国家、城市之间的事：贸易、石油、钱流向哪、工厂在哪；按国家给数据（产地份额、卖去哪国）用 countries',
  avoid:'要精确的国界（中国平台发的地图要合规：用标准地图服务 bzdt.ch.mnr.gov.cn 的底图，放进 board 的 under）',
- help:{...boardDoc.help,nodes:"[{id:'us', lon:-98, lat:39, label:'美国', at:'@b03:美国'}, {id:'tw', lon:121, lat:24, label:'台湾 · 台积电'}, {id:'me', type:'area', lon:45, lat:26, r:260, label:'中东'}]：pin 是点、area 是一团光（标一个区域）",
-  links:"[{from:'tw', to:'us', text:'芯片'}]：航线（默认弯的虚线）"},
+ help:{...boardDoc.help,nodes:"[{id:'us', lon:-98, lat:39, label:'美国', at:'@b03:美国'}, {id:'tw', lon:121, lat:24, label:'台湾 · 台积电'}, {id:'me', type:'area', lon:45, lat:26, r:260, label:'中东'}]：pin 是点、area 是一团光（标一个区域）；countries 模式下经纬度自动换到矢量地图的投影上",
+  links:"[{from:'tw', to:'us', text:'芯片'}]：航线（默认弯的虚线）",
+  style:"'dots'（默认点阵）/'countries'（矢量国界 + 按国家填色，Natural Earth 投影）",
+  countries:"[{id:'BRA', at:'@b06:巴西', color:'gold', label:'巴西'}]：countries 模式按 ISO 三字码填色（大写），念到才填上；label 可选，自动在国家中心补一个标签 pin"},
  defaults:{type:'pin',layout:'free',mbMax:8,curve:.22,lineColor:'gold',lineStyle:'dash',maxZoom:2.2,pad:170,tone:'navy',glow:false,pre:'hide',atDo:'focus'},
- make:(p,c)=>boardMake({...p,under:{...K.MAP,br:p.mapBr??1,sat:1,...(p.under??{})}},c)});
+ async prep(p,c){if(p.style==='countries'){p._geo=await (await fetch('assets/kit/world110.json')).json();for(const q of arr(p.countries))if(!p._geo.c[q.id])c.warn(`countries 里没有 ${q.id}（ISO 三字码，大写）`);}},
+ make:(p,c)=>{
+  if(p.style!=='countries')return boardMake({...p,under:{...K.MAP,br:p.mapBr??1,sat:1,...(p.under??{})}},c);
+  const Wd=p._geo,k=1.8,x0=960-1000*k,y0=540-439.5*k;   // 2000×879 的 Natural Earth 投影空间 → 世界 3600×1582
+  const ne=(lon,lat)=>{const l=lon*Math.PI/180,q=lat*Math.PI/180,q2=q*q,q4=q2*q2;
+   const x=l*(0.8707-0.131979*q2+q4*(-0.013791+q4*(0.003971*q2-0.001529*q4)));
+   const y=q*(1.007226+q2*(0.015085+q4*(-0.044475+0.028874*q2-0.005916*q4)));
+   return [x0+(Wd.ox+x*Wd.S)*k,y0+(Wd.oy-y*Wd.S)*k];};
+  const nodes=arr(p.nodes).map(n=>{if(n.lon!=null&&n.lat!=null){const [x,y]=ne(n.lon,n.lat);return {...n,x,y};}return n;});
+  const hi=arr(p.countries).map((q,i)=>({...q,t:c.at(q.at)??c.t0+.4+i*.2}));
+  const extra=hi.filter(q=>q.label&&MAPCEN[q.id]&&!nodes.some(n=>n.label===q.label)).map(q=>{const [x,y]=ne(...MAPCEN[q.id]);return {id:'_c'+q.id,type:'pin',x,y,label:q.label,at:q.at,size:36};});
+  const base=Object.entries(Wd.c).map(([iso,d])=>`<path d="${d}" fill="rgba(255,255,255,.07)" stroke="rgba(255,255,255,.16)" stroke-width="1" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>`).join('');
+  const under={html:t=>`<svg style="position:absolute;left:${f1(x0)}px;top:${f1(y0)}px;width:${f1(2000*k)}px;height:${f1(879*k)}px" viewBox="0 0 2000 879">${base}${hi.map(q=>{const a=appear(t,q.t,.45,0),d=Wd.c[q.id];if(!d||a.o<=0)return '';const cl=col(q.color??'gold');return `<path d="${d}" fill="${alpha(cl,.5*a.o)}" stroke="${alpha(cl,.95*a.o)}" stroke-width="1.6" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>`;}).join('')}</svg>`};
+  return boardMake({...p,nodes:[...nodes,...extra],under},c);
+ }});
 })();

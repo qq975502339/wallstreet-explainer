@@ -5,6 +5,7 @@ script.json 的 lines 写她实际说的话（字幕就用这一份，数字照�
 做法：faster-whisper 逐词识别（library/models/faster-whisper-small）→ 逐字和 script 的正文对齐（difflib）→ 没对上的字按前后对上的字插值。
 识别错的字（同音字）不影响：时间按位置对齐，字幕用 script 的写法。对不上的比例太高会报出来，那就是 script 和她说的不一样。"""
 import sys, json, subprocess, difflib, re, os
+from local_bins import bin
 sys.stdout.reconfigure(encoding='utf-8')
 a = sys.argv
 vid, sp, out = a[1], a[2], a[3]
@@ -17,7 +18,7 @@ def asr(path):
     M = os.environ.get('WHISPER_DIR', 'library/models/faster-whisper-small')
     try: m = WhisperModel(M, device='cuda', compute_type='float16')
     except Exception: m = WhisperModel(M, device='cpu', compute_type='int8', cpu_threads=max(1, (os.cpu_count() or 4) - 2))
-    pcm = subprocess.run(['ffmpeg', '-v', 'error', '-i', path, '-ac', '1', '-ar', '16000', '-f', 'f32le', '-'], capture_output=True, check=True).stdout
+    pcm = subprocess.run([bin('ffmpeg'), '-v', 'error', '-i', path, '-ac', '1', '-ar', '16000', '-f', 'f32le', '-'], capture_output=True, check=True).stdout
     S = json.load(open(sp, encoding='utf-8'))
     # 不能把稿子原文当 initial_prompt：whisper 会以为这些话已经说过，前面整段跳过只吐最后一句。
     # 只给一句中性提示，同音字错了不要紧（按位置对齐，字幕用 script 的写法）

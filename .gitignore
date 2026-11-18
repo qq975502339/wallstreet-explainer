@@ -15,3 +15,6 @@ sheets/
 *.webm
 *.m4a
 *.wav
+
+# 对照/临时工程（渲染对比、npm 缓存、字体下载）
+compare/

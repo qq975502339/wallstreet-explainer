@@ -8,7 +8,7 @@ import fs from 'node:fs'; import path from 'node:path'; import {fileURLToPath} f
 import {stub} from './timeline_stub.mjs';
 
 const SK = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const args = process.argv.slice(2), dst = args.find(a => !a.startsWith('--')), DEMO2 = args.includes('--demo2'), DEMO = DEMO2 || args.includes('--demo'), SYNC = args.includes('--sync');
+const args = process.argv.slice(2), dst = args.find(a => !a.startsWith('--')), DEMO2 = args.includes('--demo2'), DEMO3 = args.includes('--demo3'), DEMO = DEMO2 || DEMO3 || args.includes('--demo'), SYNC = args.includes('--sync');
 if (!dst) { console.log(fs.readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').slice(0, 6).join('\n')); process.exit(1); }
 const D = path.resolve(dst);
 let local = {}; try { local = JSON.parse(fs.readFileSync(path.join(SK, 'scripts/local.json'), 'utf8')); } catch {}
@@ -18,7 +18,7 @@ const cp = (a, b) => { fs.mkdirSync(path.dirname(b), {recursive: true}); fs.copy
 
 function copyLib() {
   for (const f of LIB) cp(path.join(SK, f), path.join(D, 'lib', path.basename(f)));
-  for (const f of ['fabric.jpg', 'grain.png', 'worldmap.png']) cp(path.join(SK, 'kit/assets', f), path.join(D, 'assets/kit', f));
+  for (const f of ['fabric.jpg', 'grain.png', 'worldmap.png', 'world110.json']) cp(path.join(SK, 'kit/assets', f), path.join(D, 'assets/kit', f));
   for (const f of fs.readdirSync(path.join(SK, 'kit/assets/ph'))) cp(path.join(SK, 'kit/assets/ph', f), path.join(D, 'assets/kit/ph', f));
 }
 function linkFonts() {
@@ -37,7 +37,7 @@ if (SYNC) {
 }
 if (fs.existsSync(D) && fs.readdirSync(D).length) { console.error(`目标已存在且不是空的：${D}`); process.exit(1); }
 fs.mkdirSync(D, {recursive: true});
-const src = path.join(SK, DEMO2 ? 'kit/demo2' : DEMO ? 'kit/demo' : 'starter');
+const src = path.join(SK, DEMO3 ? 'kit/demo3' : DEMO2 ? 'kit/demo2' : DEMO ? 'kit/demo' : 'starter');
 cp(path.join(SK, 'starter/index.html'), path.join(D, 'index.html'));
 cp(path.join(SK, 'starter/film.css'), path.join(D, 'film.css'));
 cp(path.join(src, 'film.js'), path.join(D, 'film.js'));

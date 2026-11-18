@@ -21,6 +21,7 @@ peak：把这个音效的峰值归到多少 dB（不靠猜音量）；len：只�
 """
 import json, subprocess, sys
 from pathlib import Path
+from local_bins import bin
 
 D = Path(sys.argv[1]).resolve(); T = json.loads((D / 'timeline.json').read_text('utf-8'))
 X = json.loads((D / 'sfx.json').read_text('utf-8')) if (D / 'sfx.json').exists() else {'events': []}
@@ -33,7 +34,7 @@ def cue(bid, word):
 
 
 def peak(f):
-    out = subprocess.run(['ffmpeg', '-hide_banner', '-i', str(f), '-af', 'volumedetect', '-f', 'null', '-'], capture_output=True, text=True, errors='replace').stderr
+    out = subprocess.run([bin('ffmpeg'), '-hide_banner', '-i', str(f), '-af', 'volumedetect', '-f', 'null', '-'], capture_output=True, text=True, errors='replace').stderr
     return float(out.split('max_volume:')[1].split('dB')[0])
 
 
@@ -52,7 +53,7 @@ for it in T.get('inserts', []):
     for p in it['parts']:
         wav = bites / f"{Path(p['src']).stem}_{p['in']:.2f}_{p['dur']:.2f}.wav"
         if not wav.exists():
-            subprocess.run(['ffmpeg', '-v', 'error', '-y', '-ss', f"{p['in']:.3f}", '-t', f"{p['dur']:.3f}", '-i', str(D / p['src']), '-vn', '-ac', '2', '-ar', '48000', str(wav)], check=True)
+            subprocess.run([bin('ffmpeg'), '-v', 'error', '-y', '-ss', f"{p['in']:.3f}", '-t', f"{p['dur']:.3f}", '-i', str(D / p['src']), '-vn', '-ac', '2', '-ar', '48000', str(wav)], check=True)
         ins += ['-i', str(wav)]; ms = int(round(p['start'] * 1000))
         flt.append(f"[{n}:a]volume={p.get('gain_db', 0)}dB,afade=t=in:d=0.03,afade=t=out:st={p['dur'] - .08:.3f}:d=0.08,adelay={ms}|{ms}[v{n}]"); voice.append(f'[v{n}]'); n += 1
 flt.append(''.join(voice) + f'amix=inputs={len(voice)}:normalize=0,apad=whole_dur={DUR}[voice]')
@@ -84,11 +85,11 @@ else:
     flt.append('[vkey]anullsink')
 flt.append(''.join(mix) + f'amix=inputs={len(mix)}:normalize=0,atrim=0:{DUR},loudnorm=I=-14:TP=-1.5:LRA=11[out]')
 out = D / 'mix_master.wav'
-subprocess.run(['ffmpeg', '-v', 'error', '-y', *ins, '-filter_complex', ';'.join(flt), '-map', '[out]', '-ar', '48000', str(out)], check=True)
+subprocess.run([bin('ffmpeg'), '-v', 'error', '-y', *ins, '-filter_complex', ';'.join(flt), '-map', '[out]', '-ar', '48000', str(out)], check=True)
 print('混好', out, f'{DUR:.2f}s，音效 {len(sl)} 个')
 if '--check' in sys.argv:
     def lufs(a, d):
-        o = subprocess.run(['ffmpeg', '-hide_banner', '-ss', str(a), '-t', str(d), '-i', str(out), '-af', 'ebur128', '-f', 'null', '-'], capture_output=True, text=True, errors='replace').stderr
+        o = subprocess.run([bin('ffmpeg'), '-hide_banner', '-ss', str(a), '-t', str(d), '-i', str(out), '-af', 'ebur128', '-f', 'null', '-'], capture_output=True, text=True, errors='replace').stderr
         return [l for l in o.splitlines() if l.strip().startswith('I:')][-1].strip()
     print('开头 2 秒', lufs(0, 2))
     b = T['beats'][len(T['beats']) // 2]; print('配音', b['id'], lufs(b['start'], b['end'] - b['start']))

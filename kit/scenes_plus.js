@@ -1,8 +1,9 @@
 // scenes_plus.js —— 真人口播版新加的场景（载入顺序：scenes.js → scenes_plus.js → host.js）
 (()=>{
-const K=KIT,{C,IO,E,lerp,f1,f3,col,mixc,alpha,fit,camSeq,bignum,brow,appear}=K;
+const K=KIT,{C,IO,E,lerp,f1,f3,col,mixc,alpha,fit,camSeq,bignum,brow,appear,FAM}=K;
 const {L}=S25;
 const A=v=>v==null?[]:Array.isArray(v)?v:[v];
+const arr=A;
 
 // =====================================================================================
 // line：一条真实的价格走势（日线），深色舞台上一条亮线 + 下面一片渐变（小Lin说日元那条图的做法）
@@ -101,6 +102,263 @@ K.scene('chain',{
   };
  }
 });
+// =====================================================================================
+// docpage：文件逐字原文页（比屏幕宽的纸）：镜头先看标题，再推到高亮条文，荧光笔逐行刷过
+// =====================================================================================
+K.scene('docpage',{
+ says:'政策/文件的逐字原文排满一张比屏幕宽的纸：镜头先看标题，再推到高亮的那一句，荧光笔逐行刷过',
+ use:'PDF/纸质/政策条文的逐字原文（长文、多段落）；新闻网页截图用 article',
+ avoid:'改写过的转述（必须逐字）；只有一句话（用 quote 或 article）',
+ need:['paras'],
+ help:{paras:"[['title','国务院关于……的办法'],['meta','2024 年 9 月 · 第二条'],['gap',''],['p','第二条 ……[[0|由十五年逐步提高至二十年]]……']]：[[n|文字]] 标要高亮的片段，n 对应 marks 的下标；跨行自动按行刷",
+  marks:"[{at:'@b10:十五', kind:'hl'|'box'|'under', color}]：每个片段刷过的时刻和画法（默认 hl 黄）",
+  zoom:"镜头开始推向高亮的时刻（默认第一个 mark 前 0.45 秒）",size:'正文字号（默认 64）',w:'纸宽（默认 2300，比屏幕宽、两边裁切）'},
+ defaults:{tone:'navy'},minDur:2.2,
+ beats:p=>arr(p.marks).length,
+ check(p,c){const all=arr(p.paras).map(q=>q[1]).join('');arr(p.marks).forEach((m,i)=>{if(!all.includes(`[[${i}|`))throw Error(`${c.tag}：marks[${i}] 没有对应的 [[${i}|…]] 片段`);});},
+ make(p,c){
+  const PW=p.w??2300,X0=960-PW/2,Y0=60,size=p.size??64,pad=110,iw=PW-2*pad;
+  const marks=arr(p.marks).map((m,i)=>({...m,i,t:c.at(m.at)??c.t0+1+i*.6}));
+  let y=pad+40;const lines=[];
+  const put=(text,fs,fam,lh,weight,color)=>{
+   const toks=[];let rest=text;
+   while(rest.length){const m=rest.match(/\[\[(\d+)\|([^\]]*)\]\]/);
+    if(!m){for(const ch of rest)toks.push({ch});break;}
+    for(const ch of rest.slice(0,m.index))toks.push({ch});
+    for(const ch of m[2])toks.push({ch,mi:+m[1]});
+    rest=rest.slice(m.index+m[0].length);}
+   let line=[],lw=0;
+   const flush=()=>{if(!line.length)return;let html='',x=pad,run=null;const boxes=[];
+    for(const t of line){const w=K.textW(t.ch,`${weight} ${fs}px ${fam}`);
+     if(t.mi!=null){if(!run||run.i!==t.mi){run={i:t.mi,x,w};boxes.push(run);}else run.w+=w;
+      html+=`<span data-i="${t.mi}">${t.ch}</span>`;}
+     else{run=null;html+=t.ch;}
+     x+=w;}
+    lines.push({y,html,boxes,fs,fam,lh,weight,color});y+=lh;line=[];lw=0;};
+   for(const t of toks){const w=K.textW(t.ch,`${weight} ${fs}px ${fam}`);if(lw+w>iw)flush();line.push(t);lw+=w;}
+   flush();};
+  for(const [kind,text] of arr(p.paras)){
+   if(kind==='title'){put(text,Math.round(size*1.15),FAM.han,Math.round(size*1.5),700,'#17191d');y+=30;}
+   else if(kind==='meta'){put(text,Math.round(size*.62),FAM.ui,Math.round(size*.9),500,'#8a8e96');y+=26;}
+   else if(kind==='gap'){y+=Math.round(size*.8);}
+   else{put(text,size,FAM.ui,Math.round(size*1.62),500,'#3b3e45');y+=26;}
+  }
+  const PH=y+pad;
+  const mbox=marks.map(m=>{const bs=[];for(const ln of lines)for(const b of ln.boxes)if(b.i===m.i)bs.push([b.x,ln.y,b.x+b.w,ln.y+ln.lh]);return bs.length?K.unionBox(bs):null;});
+  const zb=mbox.find(Boolean);
+  const tz=c.at(p.zoom)??(marks[0]?marks[0].t-.45:c.t0+1);
+  const sA=Math.min(.92,1780/PW),camA={x:960,y:Y0+430/sA,s:sA};
+  const keys=[{t:c.t0,cam:{...camA,s:sA*.96}},{t:c.t0,cam:camA,d:.9}];
+  if(zb)keys.push({t:tz,cam:{x:X0+(zb[0]+zb[2])/2,y:Y0+(zb[1]+zb[3])/2,s:Math.max(1.15,Math.min(1.7,1250/(zb[2]-zb[0]+320)))},d:1});
+  const cam=camSeq(keys,.02);
+  return t=>{
+   const cc=cam(t),cp=cam(t-1/30);
+   let inner='';
+   for(const ln of lines){
+    let html=ln.html;
+    for(const m of marks){if(m.kind==='box')continue;const mk=C((t-m.t)/.5);if(mk<=0)continue;
+     html=html.replace(new RegExp(`<span data-i="${m.i}">([\\s\\S]*?)</span>`,'g'),(s,ch)=>`<span style="position:relative">${ch}<u style="position:absolute;left:0;right:0;bottom:8%;height:${m.kind==='under'?'5px':'76%'};background:${m.color??'#ffd84a'};mix-blend-mode:multiply;transform:scaleX(${f3(mk)});transform-origin:0 50%"></u></span>`);}
+    inner+=`<div style="position:absolute;left:0;top:${f1(ln.y)}px;width:${PW}px;font:${ln.weight} ${ln.fs}px/${ln.lh}px ${ln.fam};color:${ln.color};white-space:nowrap">${html}</div>`;}
+   for(const [i,m] of marks.entries()){if(m.kind!=='box'||!mbox[i])continue;const b=mbox[i],q=C((t-m.t)/.35);if(q<=0)continue;
+    inner+=`<div style="position:absolute;left:${f1(b[0]-10)}px;top:${f1(b[1]-6)}px;width:${f1(b[2]-b[0]+20)}px;height:${f1(b[3]-b[1]+12)}px;border:4px solid ${m.color??'#c63038'};border-radius:6px;opacity:${f3(q)};transform:scale(${f3(lerp(1.06,1,E(q)))})"></div>`;}
+   const pg=`<div class="k-page" style="left:${X0}px;top:${Y0}px;width:${PW}px;height:${f1(PH)}px">${inner}</div>`;
+   const zk=zb?IO((t-tz)/1):0;
+   const vig=`<div class="k-full" style="z-index:40;background:radial-gradient(ellipse 70% 66% at 50% 47%,transparent ${f1(lerp(44,32,zk))}%,rgba(4,7,12,${f3(lerp(.62,.78,zk))}) 100%)"></div>`;
+   return c.bg(t,cc,cp,{tone:p.tone})+L(cc,cp,1,pg,{mb:false})+vig;
+  };
+ }
+});
+
+// =====================================================================================
+// tree：树状拆解（一个根岔成几支、支再岔成叶；支上带 +/−；念到谁镜头找谁）
+// =====================================================================================
+K.scene('tree',{
+ says:'树状拆解：一个根岔成几支、支再岔成叶，每支带 +/− 号；念到哪个节点镜头推过去、其余压暗',
+ use:'利润 = 收入 − 成本、成本再拆三项；把一个总数一层层拆开',
+ avoid:'线性算式（用 equation）；有先后的流程（用 flow）',
+ need:['root'],
+ help:{root:"{id:'p', l:'利润', t:'@b05:利润', c:[{id:'r', l:'收入', op:'+', t:'@b05:收入', c:[{l:'咖啡', t}, {l:'甜点', t}]}, {id:'c', l:'成本', op:'−', t, c:[…]}]}：最多三层",
+  focus:"[['@b05:收入','r'], ['@b06:成本','c']]：念到的节点 id 亮起、镜头推过去",
+  bw:'节点宽（默认 320）',bh:'节点高（默认 150）'},
+ defaults:{tone:'navy'},minDur:2,
+ beats:p=>arr(p.focus).length,
+ make(p,c){
+  const bw=p.bw??320,bh=p.bh??150,lv=300,gx=bw+70;
+  const root={...p.root,id:p.root.id??'root',x:960,y:240};
+  const kids=root.c??[],nodes=[root],edges=[],pos={[root.id]:[960,240]};
+  const span=Math.max(kids.length,kids.reduce((a,k)=>a+Math.max(1,(k.c??[]).length),0))*gx;
+  let lx=960-span/2;
+  kids.forEach((k,i)=>{
+   const lf=k.c??[],w=Math.max(1,lf.length)*gx,cx=lx+w/2;lx+=w;
+   const kid={...k,id:k.id??'k'+i,x:cx,y:240+lv};nodes.push(kid);pos[kid.id]=[cx,240+lv];
+   edges.push({a:[960,240+bh/2],b:[cx,240+lv-bh/2],op:k.op,t:k.t});
+   (lf.length?lf:[null]).forEach((q,j)=>{if(!q)return;const x=cx-w/2+gx/2+j*gx;
+    const leaf={...q,id:q.id??`l${i}_${j}`,x,y:240+2*lv};nodes.push(leaf);pos[leaf.id]=[x,240+2*lv];
+    edges.push({a:[cx,240+lv+bh/2],b:[x,240+2*lv-bh/2],t:q.t});});
+  });
+  const foc=arr(p.focus).map(f=>({t:c.at(f[0]),id:f[1]})).sort((a,b)=>a.t-b.t);
+  const keys=[{t:c.t0,cam:fit([960-span/2,140,960+span/2,240+2*lv+bh/2],{max:1.05,pad:60})}];
+  for(const f of foc)if(pos[f.id])keys.push({t:f.t,cam:fit([pos[f.id][0]-bw/2,pos[f.id][1]-bh/2,pos[f.id][0]+bw/2,pos[f.id][1]+bh/2],{max:1.5,pad:140}),d:.8});
+  const cam=camSeq(keys,.02);
+  return t=>{
+   const cc=cam(t),cp=cam(t-1/30),cur=[...foc].reverse().find(f=>t>=f.t);
+   const es=edges.map(e=>{const ta=c.at(e.t)??c.t0+.4,k=E((t-ta)/.5);return {a:e.a,b:e.b,curve:0,color:'gold',style:'solid',w:4,k,arrow:false,text:e.op,ts:44};}).filter(e=>e.k>0);
+   let h=K.edges(es);
+   for(const n of nodes){const a=appear(t,c.at(n.t)??c.t0+.2,.25,14);if(a.o<=0)continue;
+    const on=!cur||cur.id===n.id;
+    h+=K.card({x:n.x,y:n.y,w:bw,h:bh,color:n.color??(n.id===root.id?'gold':'steel'),title:n.l,size:52,gray:!on},{...a,br:on?1:.55});}
+   return c.bg(t,cc,cp,{tone:p.tone})+L(cc,cp,1,h);
+  };
+ }
+});
+
+// =====================================================================================
+// calc：计算器（本项目的白图表卡语言）：字段逐个填入，结果从 0 滚出——"现场算一笔账"
+// =====================================================================================
+K.scene('calc',{
+ says:'白底计算器：左边字段念到一个填一个，右边结果从 0 滚出来——"现场算一笔账"',
+ use:'屏幕上算账：单价×天数=一年花费；总额÷人数=人均',
+ avoid:'只摆算式不算（用 equation）；只有一个数（用 number）',
+ need:['fields','res'],
+ help:{fields:"[{l:'每杯价格', v:'30', u:'元', at:'@b09:三十'}]：左列字段，念到才填进框",
+  res:"[{l:'一年花费', f:'30×365', v:10950, u:'元', at:'@b09:一万', total:true}]：右边结果，从 0 滚到 v；total:true 用大号金字",
+  title:'卡标题',sub:'标题下一行小字'},
+ defaults:{tone:'navy'},minDur:2,flat:true,
+ beats:p=>arr(p.fields).length+arr(p.res).length,
+ make(p,c){
+  const F=arr(p.fields).map((q,i)=>({...q,t:c.at(q.at)??c.t0+.3+i*.5})),R=arr(p.res).map((q,i)=>({...q,t:c.at(q.at)??c.t0+1+i*.6}));
+  const cw=1340,ch=760,cx=960-cw/2,cy=96,lw=430;
+  const cam=camSeq([{t:c.t0,cam:{x:960,y:520,s:.94}},{t:c.t0,cam:{x:960,y:500,s:1},d:.8}],.02);
+  return t=>{
+   const cc=cam(t),cp=cam(t-1/30),su=c.enter==='flat'?E((t-c.t0-.3)/.55):1;
+   let rows='';
+   F.forEach((q,i)=>{const a=appear(t,q.t,.25,10),y=220+i*120;
+    rows+=`<div style="position:absolute;left:70px;top:${y}px;width:${lw-110}px;font:500 40px ${FAM.ui};color:#4a4d55;opacity:${f3(a.o)};transform:translateY(${f1(a.dy)}px)">${q.l}</div>
+     <div style="position:absolute;left:${lw}px;top:${y-16}px;width:230px;height:76px;border:2px solid #c9ccd4;border-radius:10px;background:#fff;opacity:${f3(a.o)};transform:translateY(${f1(a.dy)}px);font:600 44px ${FAM.num};color:#23252b;display:flex;align-items:center;justify-content:flex-end;padding:0 18px;box-sizing:border-box">${q.v}<span style="font:500 26px ${FAM.ui};color:#8a8e96;margin-left:8px">${q.u??''}</span></div>`;});
+   let res='';
+   R.forEach((q,i)=>{if(t<q.t-.05)return;const k=E((t-q.t)/.9),y=230+i*200,pv=K.num(q.v);
+    res+=`<div style="position:absolute;left:${lw+320}px;top:${y-52}px;font:500 36px ${FAM.ui};color:#4a4d55">${q.l}</div>
+     <div style="position:absolute;left:${lw+320}px;top:${y-4}px;font:500 30px ${FAM.en};color:#8a8e96">${q.f??''}</div>
+     <div class="k-num" style="position:absolute;left:${lw+320}px;top:${y+40}px;font-size:${q.total?150:110}px;filter:none;justify-content:flex-start">${K.numHTML(pv,{n:lerp(0,pv.n,k),fixed:true})}</div>`;});
+  const card=`<div class="k-chart" style="left:${cx}px;top:${cy}px;width:${cw}px;height:${ch}px;transform-origin:50% 100%;transform:translateY(${f1((1-su)*420)}px) perspective(2400px) rotateX(${f1((1-su)*26)}deg) rotateY(-2deg);opacity:${f3(C(su*2.2))}">${p.title?`<div class="ct">${p.title}</div>`:''}${p.sub?`<div class="cs">${p.sub}</div>`:''}<div style="position:absolute;left:${lw+270}px;top:150px;bottom:90px;width:2px;background:#e3e5ea"></div>${rows}${res}</div>`;
+   return c.bg(t,cc,cp,{tone:p.tone})+L(cc,cp,1,card);
+  };
+ }
+});
+
+// =====================================================================================
+// stack：钞票堆（钱一张一张叠起来；顶上一张透视躺平；叠完旁边立大数）
+// =====================================================================================
+K.scene('stack',{
+ says:'钞票堆：钱一张一张叠起来（叠了十二张才够付一年房租），顶上一张透视躺平，叠完旁边立大数',
+ use:'把一笔钱叠成看得见的一堆；"赚回来的钱一张一张叠"',
+ avoid:'比两堆大小（用 bars）；占比（用 share / grid）',
+ need:['n'],
+ help:{n:'几张',value:'叠完旁边立的大数（\'$12万\'）',brow:'大数上面的眉题',unit:'堆下面一行小字（\'一张 = 一个月房租\'）',sd:'叠一张几秒（默认 .18）',nw:'钞票宽（默认 460）'},
+ defaults:{tone:'navy'},minDur:1.5,
+ beats:()=>1,
+ make(p,c){
+  const n=p.n,nw=p.nw??460,gap=13,sd=p.sd??.18,x=960-(p.value?220:0),base=760;
+  const ta=c.t0+.2,done=ta+n*sd;
+  const keys=[{t:c.t0,cam:{x,y:560,s:.96}},{t:c.t0,cam:{x,y:540,s:1},d:.8}];
+  if(p.value)keys.push({t:done+.2,cam:{x:x+180,y:520,s:1.02},d:.7});
+  const cam=camSeq(keys,.02);
+  return t=>{
+   const cc=cam(t),cp=cam(t-1/30);
+   let h=`<div style="position:absolute;left:${f1(x-nw/2-160)}px;top:${base+40}px;width:${nw+320}px;height:260px;background:radial-gradient(ellipse 50% 60% at 50% 0%,rgba(150,176,226,.14),transparent 70%)"></div>`;
+   // 钞票样式照源项目 els.tsx Stack / bg.tsx Banknote：玫瑰红渐变票身 + 双边框票面，不改样式
+   for(let i=0;i<n;i++){const q=C((t-ta-i*sd)/.22);if(q<=0)continue;
+    const j=((i*37)%9)-4,y=base-i*gap+(1-E(q))*70;
+    h+=`<div style="position:absolute;left:${f1(x-nw/2+j)}px;top:${f1(y)}px;width:${nw}px;height:${gap+3}px;border-radius:3px;background:${i%2?'linear-gradient(180deg,#e98e9c,#c45f76)':'linear-gradient(180deg,#f09aa7,#cc6880)'};border:1.5px solid #9c3f58;box-shadow:0 3px 4px rgba(0,0,0,.25);opacity:${f3(C(q*3))}"></div>`;}
+   const topI=Math.min(n-1,Math.floor((t-ta)/sd));
+   if(t>ta&&topI>=0){const y=base-topI*gap,nh=nw*.54;
+    h+=`<svg width="${nw}" height="${f1(nh)}" viewBox="0 0 120 65" style="position:absolute;left:${f1(x-nw/2)}px;top:${f1(y-nh+2)}px;transform:perspective(600px) rotateX(58deg);transform-origin:50% 100%;opacity:${f3(C((t-ta-topI*sd)/.22))}"><rect x="1.5" y="1.5" width="117" height="62" rx="4" fill="#e98e9c" stroke="#a9455f" stroke-width="2.5"/><rect x="7" y="7" width="106" height="51" rx="2" fill="none" stroke="#fff4f4" stroke-opacity=".75" stroke-width="1.6"/><circle cx="60" cy="32.5" r="15" fill="#fff2f2" stroke="#a9455f" stroke-width="1.6"/><text x="60" y="40" text-anchor="middle" font-size="21" font-weight="900" fill="#c24a66" font-family="Arial">¥</text><circle cx="24" cy="32.5" r="6" fill="none" stroke="#fff4f4" stroke-width="1.6"/><circle cx="96" cy="32.5" r="6" fill="none" stroke="#fff4f4" stroke-width="1.6"/></svg>`;}
+   if(p.unit)h+=K.label({x,y:base+90,text:p.unit,size:36},{o:C((t-done)/.3)});
+   if(p.value&&t>=done+.2){const a=appear(t,done+.2,.3,16);
+    h+=K.bignum({x:x+nw/2+180,y:470,value:p.value,size:170,anchor:'l'},{o:a.o,dy:a.dy});
+    if(p.brow)h+=K.brow({x:x+nw/2+180,y:330,zh:p.brow,anchor:'l'},{o:a.o});}
+   return c.bg(t,cc,cp,{tone:p.tone})+L(cc,cp,1,h);
+  };
+ }
+});
+
+// =====================================================================================
+// grid：百格图（n 个格，念到的部分逐个变色、其余灰掉；旁边立百分比）
+// =====================================================================================
+K.scene('grid',{
+ says:'百格图：n 个小格排成网格，念到的那部分逐个变色（100 个里 37 个有漏洞）、其余灰掉，旁边立百分比',
+ use:'把占比演成"数得出来"：100 个里 37 个、10 个里 6 个；一格是一个可数的东西',
+ avoid:'只要百分比数（用 share）；连续的量（用 bars）',
+ need:['n','hi'],
+ help:{n:'总格数（默认 100）',per:'每行几个（默认 10）',hi:'变色几个',hiAt:'开始变色的时刻（逐个错开）',img:'每格的小图标（透明 PNG，可省；默认圆角方块）',alt:'变色格换的图（可省）',color:'变色颜色（默认 red）',label:'网格下一行小字',value:'旁边立的大数（\'37%\'）',brow:'大数上面的眉题',iw:'格子边长（默认 92）'},
+ defaults:{tone:'navy',color:'red'},minDur:1.8,
+ beats:()=>1,
+ make(p,c){
+  const n=p.n??100,per=p.per??10,hi=p.hi,iw=p.iw??92,gx=iw*1.12,gy=iw*1.12;
+  const rows=Math.ceil(n/per),W=(per-1)*gx+iw,H=(rows-1)*gy+iw;
+  const X0=960-W/2-(p.value?180:0),Y0=540-H/2;
+  const hiT=c.at(p.hiAt)??c.t0+1,fill=c.t0+.15;
+  const order=[...Array(n).keys()];let s=7;for(let i=n-1;i>0;i--){s=(s*9301+49297)%233280;const j=Math.floor(s/233280*(i+1));[order[i],order[j]]=[order[j],order[i]];}
+  const rank=[];order.forEach((idx,r)=>rank[idx]=r);
+  const cam=camSeq([{t:c.t0,cam:{x:960,y:540,s:.95}},{t:c.t0,cam:{x:960,y:540,s:1},d:.8}],.02);
+  const cl=col(p.color);
+  return t=>{
+   const cc=cam(t),cp=cam(t-1/30);let h='';
+   for(let i=0;i<n;i++){const r=Math.floor(i/per),c2=i%per,x=X0+c2*gx,y=Y0+r*gy;
+    const q=C((t-fill-(i/n)*.9)/.3);if(q<=0)continue;
+    const isHi=rank[i]<hi,hq=isHi?C((t-hiT-(rank[i]/Math.max(1,hi))*.9)/.25):0;
+    const rest=!isHi?C((t-hiT-.2)/.6):0;
+    const base=`position:absolute;left:${f1(x)}px;top:${f1(y)}px;width:${iw}px;height:${iw}px;`;
+    if(p.img){h+=`<img src="${p.img}" style="${base}object-fit:contain;opacity:${f3(q*(1-hq)*(1-.62*rest))};filter:${rest>0?`grayscale(${f3(rest)})`:''}">`;
+     if(hq>0)h+=`<img src="${p.alt??p.img}" style="${base}object-fit:contain;opacity:${f3(hq)};filter:drop-shadow(0 0 9px ${alpha(cl,.8)})">`;}
+    else h+=`<div style="${base}border-radius:14px;background:${hq>0?cl:'rgba(255,255,255,.16)'};box-shadow:${hq>0?`0 0 14px ${alpha(cl,.55)}`:'inset 0 0 0 1.5px rgba(255,255,255,.22)'};opacity:${f3(q*(1-.62*rest*(1-hq)))};transform:scale(${f3(lerp(.6,1,E(q))*(hq>0?lerp(1.25,1,E(hq)):1))})"></div>`;}
+   if(p.label)h+=K.label({x:X0+W/2,y:Y0+H+70,text:p.label,size:38},{o:C((t-fill-1)/.3)});
+   if(p.value&&t>=hiT){const a=appear(t,hiT+.4,.3,16);
+    h+=K.bignum({x:X0+W+150,y:500,value:p.value,size:190,anchor:'l',color:p.color},{o:a.o,dy:a.dy});
+    if(p.brow)h+=K.brow({x:X0+W+150,y:350,zh:p.brow,anchor:'l'},{o:a.o});}
+   return c.bg(t,cc,cp,{tone:p.tone})+L(cc,cp,1,h);
+  };
+ }
+});
+
+// =====================================================================================
+// bubble：观众想法气泡（虚构昵称+概括想法；要辟的那条亮起来打叉，其余退后）
+// =====================================================================================
+K.scene('bubble',{
+ says:'观众想法气泡：几个虚构网友的概括想法（"大家都以为……"），要辟的那条亮起来打叉、其余退后',
+ use:'先摆误区再辟：下一镜接 article/quote 给真证据；想法要概括、虚构昵称，不搬真实用户原话',
+ avoid:'真人原话（用 quote）；只有一条想法（口播直接说）',
+ need:['items'],
+ help:{items:"[{who:'网友甲', text:'买黄金保值', at:'@b02:大家都'}, …]：2–4 条气泡",pick:"{i:1, at:'@b03:但是'}：要辟的那条亮起来打叉、镜头推过去，其余压暗",color:'气泡颜色（默认 steel）'},
+ defaults:{tone:'navy'},minDur:1.5,
+ beats:p=>arr(p.items).length+(p.pick?1:0),
+ check(p,c){const n=arr(p.items).length;if(n<2||n>4)c.warn(`bubble 放 2–4 条气泡，现在 ${n} 条`);if(p.pick&&!arr(p.items)[p.pick.i])throw Error(`${c.tag}：pick.i 超出 items`);},
+ make(p,c){
+  const I=arr(p.items).map((q,i)=>({...q,i,t:c.at(q.at)??c.t0+.3+i*.5})),n=I.length;
+  const pk=p.pick?{...p.pick,t:c.at(p.pick.at)}:null;
+  const W=560,H=250,gx=640;
+  const pos=n<=2?[[960-gx/2,430],[960+gx/2,560]]:n===3?[[960-gx,400],[960,560],[960+gx,400]]:[[960-gx*.9,380],[960+gx*.9,380],[960-gx*.9,640],[960+gx*.9,640]];
+  const keys=[{t:c.t0,cam:{x:960,y:520,s:.95}},{t:c.t0,cam:{x:960,y:520,s:1},d:.8}];
+  if(pk)keys.push({t:pk.t,cam:{x:pos[pk.i][0],y:pos[pk.i][1],s:1.12},d:.8});
+  const cam=camSeq(keys,.02);
+  return t=>{
+   const cc=cam(t),cp=cam(t-1/30);let h='';
+   I.forEach((q,i)=>{const a=appear(t,q.t,.3,16);if(a.o<=0)return;
+    const [x,y]=pos[i],on=pk&&pk.i===i,dim=pk&&!on?C((t-pk.t)/.5):0;
+    const cl=col(q.color??p.color??'steel');
+    h+=`<div style="position:absolute;left:${f1(x-W/2)}px;top:${f1(y-H/2)}px;width:${W}px;height:${H}px;${K.fx({o:a.o,dy:a.dy,br:lerp(1,.5,dim),sat:lerp(1,.5,dim)},'translate(0,0)')}">
+      <div style="position:absolute;inset:0;border-radius:44px;background:linear-gradient(160deg,${mixc(cl,'#ffffff',.14)},${mixc(cl,'#000000',.34)});box-shadow:0 0 0 2px rgba(255,255,255,.16),0 24px 50px rgba(0,0,0,.55)"></div>
+      <div style="position:absolute;left:70px;bottom:-26px;width:52px;height:52px;border-radius:50%;background:${mixc(cl,'#000000',.3)}"></div>
+      <div style="position:absolute;left:44px;bottom:-52px;width:26px;height:26px;border-radius:50%;background:${mixc(cl,'#000000',.36)}"></div>
+      <div style="position:absolute;left:44px;top:30px;font:500 28px ${FAM.ui};color:rgba(255,255,255,.66);letter-spacing:.1em">${q.who}</div>
+      <div style="position:absolute;left:44px;right:44px;top:82px;font:600 44px ${FAM.han};color:#f4efdc;letter-spacing:.06em;line-height:1.3">${q.text}</div></div>`;
+    if(on){const q2=C((t-pk.t)/.3);h+=K.mark({x:x+W/2-40,y:y-H/2+40,kind:'no',s:56},{o:q2,sc:lerp(.85,1,E(q2))});}
+   });
+   return c.bg(t,cc,cp,{tone:p.tone})+L(cc,cp,1,h);
+  };
+ }
+});
+
 const css=`.ch-card{position:absolute;border-radius:16px;overflow:hidden;background:linear-gradient(160deg,color-mix(in srgb,var(--c) 70%,#fff 8%),color-mix(in srgb,var(--c) 55%,#000 45%));box-shadow:0 0 0 2px rgba(255,255,255,.18),0 30px 70px rgba(0,0,0,.7)}
 .ch-card.img::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(0,0,0,.78))}
 .ch-card .ch-t{position:absolute;left:0;right:0;bottom:22px;z-index:2;text-align:center;font:64px Shu,'Alimama ShuHeiTi',sans-serif;letter-spacing:8px;color:#fff;text-shadow:0 3px 12px #000a}

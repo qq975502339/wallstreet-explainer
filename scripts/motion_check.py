@@ -5,6 +5,7 @@
 拟合不了的那部分（残差）= 各处动得不一样（前后层视差、画里有东西在演）。
 指标解释和参考值见 references/motion.md「量化目标」。数字过了不等于好看，没过一定有问题。"""
 import sys, subprocess, numpy as np, cv2
+from local_bins import bin
 sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 a = sys.argv
 vids = [x for x in a[1:] if not x.startswith('--') and not x.replace('.', '').isdigit()]
@@ -18,7 +19,7 @@ REF = {  # 三条参考片去掉整屏主持人后的 B-roll
 }
 def measure(src):
     W, H = 320, 180; h = int(H * TOP)
-    p = subprocess.Popen(['ffmpeg', '-v', 'error', '-ss', str(T0), '-i', src] + (['-t', str(T1 - T0)] if T1 < 1e8 else []) +
+    p = subprocess.Popen([bin('ffmpeg'), '-v', 'error', '-ss', str(T0), '-i', src] + (['-t', str(T1 - T0)] if T1 < 1e8 else []) +
                          ['-vf', f'scale={W}:{H},format=gray', '-f', 'rawvideo', '-'], stdout=subprocess.PIPE)
     ys, xs = np.mgrid[6:h - 6:8, 6:W - 6:8]; X = (xs - W / 2).ravel().astype(np.float32); Y = (ys - h / 2).ravel().astype(np.float32)
     A = np.zeros((2 * len(X), 4), np.float32); A[0::2, 0] = X; A[0::2, 1] = -Y; A[0::2, 2] = 1; A[1::2, 0] = Y; A[1::2, 1] = X; A[1::2, 3] = 1

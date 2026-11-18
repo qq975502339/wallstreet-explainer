@@ -189,6 +189,26 @@ const brow=(o,st)=>{const ax=o.anchor==='l'?'0':o.anchor==='r'?'-100%':'-50%';
 const frame=(o,st)=>`<div class="k-frame" style="left:${f1(o.x-o.w/2)}px;top:${f1(o.y-o.h/2)}px;width:${f1(o.w)}px;height:${f1(o.h)}px;${o.bw!=null?`border-width:${f1(o.bw)}px;`:''}${o.r!=null?`border-radius:${f1(o.r)}px;`:''}${fx(st,'translate(0,0)')}">${o.html??`<img src="${o.src}"${o.pos?` style="object-position:${o.pos}"`:''}>`}</div>`+
  (o.label?label({x:o.x,y:o.y-o.h/2-46,text:o.label,size:o.lsize??38},{o:st?.o}):'');
 
+// 盖章（证据上的"判决"）：{x,y,text:'谣言'|'官方'|'已核实'|自定,color:'red'|'green'|'gold',rot,size,blend}
+// 盖下去那一下由调用方给 st：sc 从 1.7 收到 1、rot 从 -14 收到 -8（快、不弹）。blend 默认 multiply（印在白纸上是油墨）；织物上写 'normal'
+function stamp(o,st={}){
+ const c=col(o.color??'red');
+ return `<div class="k-stamp" style="left:${f1(o.x)}px;top:${f1(o.y)}px;--sc:${c};font-size:${f1(o.size??110)}px;mix-blend-mode:${o.blend??'multiply'};${fx(st,`translate(-50%,-50%) rotate(${f1(o.rot??-8)}deg)`)}">${o.text}</div>`;
+}
+// 手绘圈注（荧光笔之外的第二种标注）：{x,y,w,h,kind:'circle'|'under'|'arrow',color,seed,k(0..1 画出来的进度),wd}
+// 抖动用 hashf(seed)：同一个 t 同一笔，不随机跳。circle 画一圈多一点（手绘不收口）
+function scribble(o,st={}){
+ const k=o.k??1;if(k<=0)return '';
+ const c=col(o.color??'gold'),sd=o.seed??7,j=(i,a)=>(hashf(i,sd)-.5)*a;
+ let d='';
+ if(o.kind==='under'){const n=14;for(let i=0;i<=n;i++){const u=i/n;d+=(i?'L':'M')+f1(o.x+o.w*u+j(i,6))+' '+f1(o.y+o.h+j(i,7));}}
+ else if(o.kind==='arrow'){const n=10;for(let i=0;i<=n;i++){const u=i/n;d+=(i?'L':'M')+f1(o.x+o.w*u+j(i,8))+' '+f1(o.y+o.h*u-Math.sin(u*Math.PI)*o.h*.35+j(i,8));}
+  d+=`M${f1(o.x+o.w-26)} ${f1(o.y+o.h-20)}L${f1(o.x+o.w)} ${f1(o.y+o.h)}L${f1(o.x+o.w-30)} ${f1(o.y+o.h+14)}`;}
+ else{const cx=o.x+o.w/2,cy=o.y+o.h/2,rx=o.w/2+18,ry=o.h/2+16,n=30;
+  for(let i=0;i<=n+4;i++){const a=-Math.PI/2+i/n*2*Math.PI*1.08;d+=(i?'L':'M')+f1(cx+Math.cos(a)*(rx+j(i,10)))+' '+f1(cy+Math.sin(a)*(ry+j(i+50,8)));}}
+ return `<svg class="k-full" width="1920" height="1080" style="overflow:visible;${st.o!=null?`opacity:${f3(C(st.o))}`:''}"><path d="${d}" fill="none" stroke="${c}" stroke-width="${o.wd??5}" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="${f3(1-k)}" style="filter:drop-shadow(0 0 6px ${alpha(c,.45)})"/></svg>`;
+}
+
 // 连线（一组，世界坐标）：e={a:[x,y],b:[x,y],curve,color,style:'dots'|'dash'|'solid',w,k(画出来的进度),flow(流动偏移),arrow,o,pulse(0..1 亮点位置)}
 let UID=0;
 const qpt=(e,u)=>{const [ax,ay]=e.a,[bx,by]=e.b,[cx,cy]=ctrl(e);return [(1-u)**2*ax+2*(1-u)*u*cx+u*u*bx,(1-u)**2*ay+2*(1-u)*u*cy+u*u*by];};
@@ -414,5 +434,5 @@ async function use(F){
 
 window.KIT={use,scene,SCENES,FONTS:['500 60px Mi','600 60px Mi','60px Shu','60px Num','600 30px Mont','italic 600 30px Mont'],
  C,IO,E,EI,lerp,f1,f2,f3,SAFE,COLORS,BRAND,TONE,col,rgb,mixc,alpha,shade,num,full,fmtN,numText,numHTML,unitHTML,textW,fitPx,megaW,megaFit,vw,FAM,timer,track,appear,
- fit,unionBox,moveDur,camSeq,fx,stage,disc,card,tag,pill,mark,label,bignum,brow,frame,edges,qpt,person,halo,measure,loadImg,MEAS,ENTERS,hashf,dust,MAP,lonlat,cssScale};
+ fit,unionBox,moveDur,camSeq,fx,stage,disc,card,tag,pill,mark,label,bignum,brow,frame,stamp,scribble,edges,qpt,person,halo,measure,loadImg,MEAS,ENTERS,hashf,dust,MAP,lonlat,cssScale};
 })();

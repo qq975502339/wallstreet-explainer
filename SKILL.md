@@ -179,7 +179,7 @@ node scripts/render.mjs --dir <片子目录> --video --h 720
 
 依赖：ffmpeg、yt-dlp、Python（edge-tts、numpy、opencv-python、Pillow；可选 faster-whisper；抠人要 onnxruntime-gpu 和 rembg 下载的模型）、Node 和 Playwright。安装方法见 README。
 
-字体不随仓库给，要自己下（清单见 README）：Bebas Neue、阿里妈妈数黑体、MiSans、Montserrat，文件名以 `kit/kit.css` 里的 `@font-face` 为准。下好放进一个文件夹，在 `scripts/local.json` 里写 `fonts_dir`；`new_film.mjs` 建的片子里，`fonts/` 是指向这个文件夹的联接，联接建不了就拷过去。Playwright、ffmpeg 不在默认位置时，也写在 `local.json`（`playwright_from`、`ffmpeg`）。这个文件只放本机配置，不进仓库。
+字体不随仓库给，要自己下（清单见 README）：Bebas Neue、阿里妈妈数黑体、MiSans、Montserrat，文件名以 `kit/kit.css` 里的 `@font-face` 为准。下好放进一个文件夹，在 `scripts/local.json` 里写 `fonts_dir`；`new_film.mjs` 建的片子里，`fonts/` 是指向这个文件夹的联接，联接建不了就拷过去。Playwright、ffmpeg、yt-dlp 不在默认位置时，也写在 `local.json`（`playwright_from`、`ffmpeg`、`ffprobe`、`yt_dlp`；后三个写 exe 路径或所在目录都行，py 脚本经 `scripts/local_bins.py` 统一解析）。`yt_dlp` 指到目录时取其中的 `yt-dlp.exe`：它的便携配置 `yt-dlp.conf` 和 cookies 放在 exe 同目录会自动生效。这个文件只放本机配置，不进仓库。
 
 ## 配音：先用临时语音
 

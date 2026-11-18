@@ -25,6 +25,7 @@ script.json 例：
 """
 import asyncio, difflib, json, subprocess, sys
 from pathlib import Path
+from local_bins import bin
 
 SP = Path(sys.argv[1]).resolve(); D = SP.parent
 S = json.loads(SP.read_text('utf-8'))
@@ -40,7 +41,7 @@ def dur(f):
 
 def lead_silence(f):
     """切掉的开头静音有多长（逐字时间要减掉它）"""
-    out = subprocess.run(['ffmpeg', '-hide_banner', '-i', str(f), '-af', 'silencedetect=n=-45dB:d=0.02', '-f', 'null', '-'], capture_output=True, text=True).stderr
+    out = subprocess.run([bin('ffmpeg'), '-hide_banner', '-i', str(f), '-af', 'silencedetect=n=-45dB:d=0.02', '-f', 'null', '-'], capture_output=True, text=True).stderr
     for ln in out.splitlines():
         if 'silence_end' in ln and 'silence_start: 0' in out.split('silence_end')[0][-60:]:
             return max(0.0, float(ln.split('silence_end:')[1].split('|')[0]) - .03)
@@ -95,12 +96,12 @@ for ln in S['lines']:
     src_key = f"{ln.get('say', text)}|{VOICE}|{RATE}|{final.exists()}"
     if REDO or not wav.exists() or meta.get(lid, {}).get('key') != src_key:
         if final.exists():                       # 正式配音：只切静音，不变速
-            subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', str(final), '-af', f'{TRIM},areverse,{TRIM},areverse', '-ar', '48000', '-ac', '1', str(wav)], check=True)
+            subprocess.run([bin('ffmpeg'), '-v', 'error', '-y', '-i', str(final), '-af', f'{TRIM},areverse,{TRIM},areverse', '-ar', '48000', '-ac', '1', str(wav)], check=True)
             words = asr_words(wav)
         else:                                    # 临时配音：edge-tts
             mp3 = D / 'voice' / f'{lid}.edge.mp3'; words = asyncio.run(edge(ln.get('say', text), mp3))
             lead = lead_silence(mp3)
-            subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', str(mp3), '-af', f'{TRIM},areverse,{TRIM},areverse', '-ar', '48000', '-ac', '1', str(wav)], check=True)
+            subprocess.run([bin('ffmpeg'), '-v', 'error', '-y', '-i', str(mp3), '-af', f'{TRIM},areverse,{TRIM},areverse', '-ar', '48000', '-ac', '1', str(wav)], check=True)
             words = [[w, s - lead, e - lead] for w, s, e in words]
         meta[lid] = {'key': src_key, 'words': words}
     elif ASR:

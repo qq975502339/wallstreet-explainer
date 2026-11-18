@@ -650,3 +650,35 @@ node scripts/render.mjs --dir <片子> --video --h 720
 | `gallery/gif/` | 动图（560 宽、每秒 12 帧，从示例片 720p 截的）：`flat_roll` 圆盘倒成桌面、数立起来滚到总数 · `article_chart` 原文刷黄 → 倒下、图表立起来 · `network` 钱在三家之间转一圈 · `bars` 柱子长出来、镜头沿着差距走 · `map` 地图上飞一段 · `change` 数从多少变成多少 · `headlines` 标题墙里拎出一句刷黄 |
 
 字幕样式不在 kit 里，在片子自己的 `film.css`（新片从 `starter/film.css` 拷：MiSans Medium 60px、白字带柔阴影、盒子顶在 y=936，和原版一样）。`new_film.mjs --sync` 只更新 `lib/` 和 `assets/kit/`，不动 `film.css`：老片子要新字幕，手动从 `starter/film.css` 拷。
+
+## 接入版式（从小Lin说包装项目借来、换成本项目视觉语言）
+
+能跑的完整例子：`demo3/film.js`（下面每个各用一次）。`node scripts/new_film.mjs <目录> --demo3` 建出来就能渲。
+
+**新场景**（`scenes_plus.js`）：
+
+| 场景 | 说什么 | 最要紧的参数 |
+|---|---|---|
+| `docpage` | 政策/文件逐字原文排满比屏幕宽的纸，镜头推到高亮条文逐行刷黄 | `paras`（`[[n\|文字]]` 标高亮片段）`marks`（`kind:'hl'/'box'/'under'`）`zoom` |
+| `tree` | 一个根岔成几支、支再岔成叶，支上带 +/− | `root`（三层）`focus:[[时刻,id]]` |
+| `calc` | 白卡计算器：字段念到才填、结果从 0 滚出 | `fields` `res`（`total:true` 大号金字） |
+| `stack` | 钞票一张一张叠成堆，顶上一张透视躺平 | `n` `value` `unit` |
+| `grid` | 百格图：念到的部分逐个变色、其余灰掉 | `n` `hi` `hiAt` `value`；`img`/`alt` 可换小图标 |
+| `bubble` | 虚构网友的概括想法气泡，要辟的那条亮起来打叉 | `items`（2–4 条）`pick:{i,at}`；不搬真实用户原话 |
+
+**现有场景的新参数**：
+
+| 场景 | 新参数 | 说什么 |
+|---|---|---|
+| `chart` | `series:[{v,label,color}]` | 多序列折线（剪刀差/交叉）；第一条是主角，右上角自动图例 |
+| `share` | `pie:true` / `hole:0..1` / `legend:true` | 实心饼 / 环厚度 / 图例放右边一列 |
+| `timeline` | `alt:true` | 卡片在轴上下交替 |
+| `flow` | `loop:{label,at}` | 绕回起点的回环箭头（"卖完再进下一批"） |
+| `compare` | 左右写 `value/sub/pts` | 表头下立大数 + 小字 + 最多 3 条要点 |
+| `map` | `style:'countries'` + `countries:[{id:'BRA',at,color,label}]` | 矢量国界 + 按国家填色（ISO 三字码）；**点阵默认不变**，老片不受影响 |
+| `article` | `stamp:{text,at,color}` / `scribble:{at,kind,color}` | 刷黄之后盖章（判决那一下）/ 手绘圈注 |
+| `desk` | 每张 item 写 `stamp` / `scribble` | 同上，按张各自带 |
+
+通用零件（手写档也能用）：`K.stamp({x,y,text,color,rot,size})`（st.sc 从 1.7 收到 1 = 盖下去）、`K.scribble({x,y,w,h,kind:'circle'/'under'/'arrow',k})`（k 是画出来的进度）。
+
+地图合规提醒不变：`countries` 是示意图（Natural Earth 投影、不含精确国界主张）；中国平台正式发布要合规底图时，仍按 `map` 的 avoid 走标准地图服务。
