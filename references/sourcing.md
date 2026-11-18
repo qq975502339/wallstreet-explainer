@@ -6,7 +6,11 @@
 2. **大媒体的纪录片**（Bloomberg Originals 这类）：采访近景很漂亮，自带名牌，航拍可以当气氛镜。
 3. **新闻台**（CNBC、Bloomberg TV 等）：底部有新闻条，只在两种情况下用：截当事人的原声，或者新闻条本身就是证据（比如“NVIDIA TO INVEST UP TO $100 BILLION IN OPENAI”）。
 4. **新闻和报告原文截图**：用来证明可能被质疑的数。
-5. **Wikimedia Commons**：只用来取 CC 许可的人物照片（做圆盘里的抠像）和 logo，要注明作者和许可。它上面的视频画质普遍太低。
+5. **Wikimedia Commons**：只用来取 CC 许可的人物照片（做圆盘里的抠像）和 logo，要注明作者和许可。它上面的视频画质普遍太低。用脚本拿，不手工翻：
+   - `python scripts/commons_photo.py search "Jensen Huang" --n 6`：列候选（许可/尺寸/作者/页面），只列 PD/CC0/CC BY/CC BY-SA（NC/ND 会裁切调色加字，不能用）；英文关键词结果更多。
+   - `python scripts/commons_photo.py get "File:<标题>.jpg" <片子>/assets/img/jensen.jpg --width 2000`：下载+验许可（不自由直接拒），写 `<图>.json` 侧车（作者/许可/页面/现成中文署名行）。
+   - `python scripts/commons_logo.py <片子>/assets/logos "NVIDIA=File:NVIDIA logo.svg" "Oracle=Oracle logo"`：Logo SVG 由 Commons 服务端渲染成 PNG，429 自动退避，追加 `CREDITS.txt`；MISSING 就换精确 File: 标题或官网 press kit。
+   - 署名和许可抄进该片 CREDITS.md / 视频简介（规矩 16：不上屏）；CC 只管版权，不管商标和肖像权，Logo 只指称性使用、不改色不变形。
 6. **生成图**：中性纹理；或者演一个拍不到的具体比喻物件（一枚币、一座楼、一条蛇吞大象），抠出来放进前后层，写实的标“AI生成”。不做电影感氛围大片。
 
 这些视频大多有版权，只做评论、解读性质的引用。**每条片都要把全部素材的出处写进简介**（格式参考 `examples/ai-burn-money/CREDITS.md`），并提醒用户存在被投诉的风险。

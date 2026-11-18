@@ -162,6 +162,8 @@ node scripts/render.mjs --dir <片子目录> --video --h 720
 | `timeline_stub.mjs` | 没有配音时按字数估时间线（和 `temp_voice.py` 同格式，带 `stub:true`） |
 | `footage.py` | `search` 搜片 / `get` 下载（可只下一段、只下音频）/ `sheet` 带时间码的联系表 / `scenes` 镜头切点 / `extract` 抽 30fps 帧序列 / `wave` 看原声剪口的响度 |
 | `snap_news.mjs` | 新闻和报告原文截图：拦广告、去浮层、等字体加载完再量关键词的框（荧光笔用，坐标写进 `docs/news.json`） |
+| `commons_photo.py` | Commons 自由许可照片 search/get：验许可（只 PD/CC0/BY/BY-SA）、下载、写作者/许可/中文署名侧车 `.json` |
+| `commons_logo.py` | Commons 真实 Logo → PNG（SVG 服务端渲染）、429 退避重试、追加 `CREDITS.txt`；MISSING 换精确标题或 press kit |
 | `matte.py` | 实拍逐帧抠人（GPU 上 ISNet 约 0.25 秒/帧），提示藏着的切点，只存人物外框那一块。没有显卡：`examples/google-apple-20b/matte_full.py`（CPU，同一个模型） |
 | `matte_clean.py` | 抠像后处理：去细线零碎、整列抹掉贴着的椅背、写出每帧头肩中心（放人时跟住他） |
 | `matte_despill.py` | 抠像去色边：原片背景色（比如会场蓝幕）渗进软边，换底后一圈蓝光。软边换色、收边、压溢色，写到新目录，先 `--check` 看单帧 |
@@ -171,6 +173,7 @@ node scripts/render.mjs --dir <片子目录> --video --h 720
 | `temp_voice.py` | `script.json` → 临时配音（edge-tts）和 `timeline.json`（每个字的时刻、原声插段、片名位置）；有正式配音时自动换上，`--asr` 重新对齐 |
 | `render.mjs` | 逐帧渲染：`--check` 查镜头表（模板档，几秒，不渲染）、`--sheet` 每镜三帧拼图、`--stills` 看帧、`--video --range` 渲一段、`--h 1080` 出成片（渲完自动报“第几秒画面是空的”）；`--moves [--prev 上一条/out/moves.json]` 查手法用量 |
 | `strip.py` | 连续帧拼图：一个动作 8 张，查静帧看不出来的穿帮；也用来拆参考片的动作 |
+| `audit.py` | 成片像素质检：视频抽帧 vs 同时刻静帧逐块比差，抓"静帧正常视频坏"；flagged 必须 0 或每条能解释，并排图 out/audit/flagged.jpg |
 | `motion_check.py` | 镜头运动自检：画面完全不动的时间、定住次数、镜头在动的时间、前后层、推拉比，和参考片的区间比 |
 | `mix.py` | 配音、原声、音效、配乐（配乐给人声让路）→ -14 LUFS；`--check` 量各段响度。时间线里有 `host` 就把口播原声整条当人声 |
 | `host_timeline.py` | 真人口播 → `timeline.json`：faster-whisper 逐词识别，逐字对齐到 script.json 的正文（同音字识别错不影响时刻），`--tail` 片尾多留几秒 |
