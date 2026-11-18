@@ -23,13 +23,7 @@ def asr(path):
     # 不能把稿子原文当 initial_prompt：whisper 会以为这些话已经说过，前面整段跳过只吐最后一句。
     # 只给一句中性提示，同音字错了不要紧（按位置对齐，字幕用 script 的写法）
     prompt = '以下是普通话的句子。'
-    try:
-        segs, _ = m.transcribe(np.frombuffer(pcm, np.float32), language='zh', word_timestamps=True, beam_size=8, condition_on_previous_text=False, initial_prompt=prompt)
-        segs = list(segs)
-    except RuntimeError:                      # 缺 CUDA DLL 时构造不报错、encode 才报：落 CPU 重试
-        m = WhisperModel(M, device='cpu', compute_type='int8', cpu_threads=max(1, (os.cpu_count() or 4) - 2))
-        segs, _ = m.transcribe(np.frombuffer(pcm, np.float32), language='zh', word_timestamps=True, beam_size=8, condition_on_previous_text=False, initial_prompt=prompt)
-        segs = list(segs)
+    segs, _ = m.transcribe(np.frombuffer(pcm, np.float32), language='zh', word_timestamps=True, beam_size=8, condition_on_previous_text=False, initial_prompt=prompt)
     return [{'start': s.start, 'end': s.end, 'text': s.text, 'words': [[w.word, w.start, w.end, w.probability] for w in s.words]} for s in segs]
 R = json.load(open(asr_path, encoding='utf-8')) if asr_path else asr(vid)
 print('识别出来的（和 script.json 核对她说的字）：\n  ' + '\n  '.join(x['text'].strip() for x in R))

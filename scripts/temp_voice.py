@@ -23,7 +23,7 @@ script.json 例：
   python temp_voice.py film/script.json --redo     # 全部重做临时配音
   python temp_voice.py film/script.json --asr      # 用 faster-whisper 给所有句子逐字对齐（换成正式配音后用）
 """
-import asyncio, difflib, json, os, subprocess, sys
+import asyncio, difflib, json, subprocess, sys
 from pathlib import Path
 from local_bins import bin
 
@@ -83,16 +83,9 @@ def asr_words(wav):
     global whisper
     if whisper is None:
         from faster_whisper import WhisperModel
-        wm = os.environ.get('WHISPER_MODEL', 'large-v3')
-        try: whisper = WhisperModel(wm, device='cuda', compute_type='float16')
-        except Exception: whisper = WhisperModel(wm, device='cpu', compute_type='int8')
-    try:
-        segs, _ = whisper.transcribe(str(wav), language='zh', word_timestamps=True)
-        segs = list(segs)
-    except RuntimeError:                      # 缺 CUDA DLL 时构造不报错、encode 才报：落 CPU 重试
-        whisper = WhisperModel(wm, device='cpu', compute_type='int8')
-        segs, _ = whisper.transcribe(str(wav), language='zh', word_timestamps=True)
-        segs = list(segs)
+        try: whisper = WhisperModel('large-v3', device='cuda', compute_type='float16')
+        except Exception: whisper = WhisperModel('large-v3', device='cpu', compute_type='int8')
+    segs, _ = whisper.transcribe(str(wav), language='zh', word_timestamps=True)
     return [[w.word, float(w.start), float(w.end)] for s in segs for w in s.words]
 
 

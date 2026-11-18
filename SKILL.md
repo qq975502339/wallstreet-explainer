@@ -1,6 +1,6 @@
 ---
 name: wallstreet-explainer
-description: 华尔街式的财经/科技解读短片（1–3 分钟、16:9，风格学自小Lin说），两种模式按有没有真人视频自动选：用户给了口播视频（真人或数字人，一个机位）就走真人口播模式——她是片子的"地面"，证据挂到她身后的墙上、关键词她身后换成织物舞台和巨字、讲证据时缩进圆窗或竖窗再长回全屏；没给就走无人动效包装模式——当事人实拍抠像站在巨字前面。两种模式共用：真实的人、新闻原文和官方画面作证据，图形（照片圆盘、金色大数字、柱子、图表、金价线、因果链）只演钱和关系，细斜纹深蓝织物底，克制的 2.5D，每一镜接住上一镜。模板档（镜头表 + render.mjs --check 自检）和手写档。工具：找片下片、图库搜下（Pexels/Pixabay 空镜）、比喻物件生图、人物故事段落委托 bighead-collage（16:9 整屏穿插）、新闻截图和荧光笔、逐帧抠像、口播逐字对齐、配音时间线、逐帧渲染、合成音效、混音。用户说"wallstreet-explainer""wallstreet-presenter""像《AI到底有多烧钱》那样""做一条财经/科技解读""真人口播财经""小Lin说那种""我有口播视频，帮我包装成财经解读""把一笔账讲清楚"时使用。
+description: 华尔街式的财经/科技解读短片（1–3 分钟、16:9，风格学自小Lin说），两种模式按有没有真人视频自动选：用户给了口播视频（真人或数字人，一个机位）就走真人口播模式——她是片子的"地面"，证据挂到她身后的墙上、关键词她身后换成织物舞台和巨字、讲证据时缩进圆窗或竖窗再长回全屏；没给就走无人动效包装模式——当事人实拍抠像站在巨字前面。两种模式共用：真实的人、新闻原文和官方画面作证据，图形（照片圆盘、金色大数字、柱子、图表、金价线、因果链）只演钱和关系，细斜纹深蓝织物底，克制的 2.5D，每一镜接住上一镜。模板档（镜头表 + render.mjs --check 自检）和手写档。工具：找片下片、图库搜下（Pexels/Pixabay 空镜）、比喻物件生图、新闻截图和荧光笔、逐帧抠像、口播逐字对齐、配音时间线、逐帧渲染、合成音效、混音。用户说"wallstreet-explainer""wallstreet-presenter""像《AI到底有多烧钱》那样""做一条财经/科技解读""真人口播财经""小Lin说那种""我有口播视频，帮我包装成财经解读""把一笔账讲清楚"时使用。
 ---
 
 # 华尔街式财经解读（wallstreet-explainer）
@@ -77,7 +77,7 @@ python scripts/mix.py <片子目录> --check
 | 0 选题 | 题目要同时满足“现在热”和“看完能带走点什么”；事实先查清、留链接 | 两三个题目，每个附一句钩子 |
 | 1 文案 | 口语、第一人称，句句往下接；数字写成读法；插原声的地方先写铺垫句（`references/audio.md`） | 全文。点头之前不做正式配音 |
 | 2 导演表 | 见下面“导演表”一节。模板档在“手法”一列写场景名；每一镜的素材从哪来也写上 | 要点：开头怎么抓人、每处怎么接、要不要加铺垫句、哪几处用当事人抠像 |
-| 3 素材 | 官方高清片 → 新闻原文 → 当事人原声 → 当事人抠像用的整段实拍（没有切点、有对得上台词的动作）；空镜和气氛镜用 Pexels/Pixabay 图库（`stock.py`）；人物经历/创业故事/公司历史段落委托 bighead-collage 做成 16:9，`insert_bighead.py` 收进主片整屏穿插（`footage`，`references/bighead_insert.md`）。先拼联系表看过，再定入点，逐帧查切点；单段只截要用的几秒（`references/sourcing.md`） | 3–4 张关键样帧（真素材 + 版式），方向对了再做整片 |
+| 3 素材 | 官方高清片 → 新闻原文 → 当事人原声 → 当事人抠像用的整段实拍（没有切点、有对得上台词的动作）；空镜和气氛镜用 Pexels/Pixabay 图库（`stock.py`）。先拼联系表看过，再定入点，逐帧查切点；单段只截要用的几秒（`references/sourcing.md`） | 3–4 张关键样帧（真素材 + 版式），方向对了再做整片 |
 | 4 配音和时间线 | 先用 `scripts/temp_voice.py` 出临时语音，或用 `scripts/timeline_stub.mjs` 按字数估出时间线，画面全部挂在字上；换正式配音后重新对齐 | — |
 | 5 开头 | 先挑 3 个机制不同的钩子，各做 5–8 秒粗剪给用户选（`references/opening.md`）；选中的再做成从 0 秒到第一个换段处的小样（15–20 秒，带声音） | 3 个钩子粗剪 → 选中后的开头小样 |
 | 6 全片 720p | 按导演表铺完。模板档：镜头表 → `--check` → `--sheet` → 720p；手写档：每写两三镜截静帧看，关键动作看连续帧（`strip.py`），再跑 `render.mjs --moves`。交片前跑 `motion_check.py`，720p 抽帧和 `frames_1fps.jpg` 并排比 | 720p 全片、抽帧图，再点出两三处请他重点看 |
@@ -149,7 +149,6 @@ node scripts/render.mjs --dir <片子目录> --video --h 720
 | 两镜之间怎么接、运镜和动作的手感、走法 → 模板写法 | `references/grammar.md` |
 | 开头 | `references/opening.md` |
 | 找片、下片、图库空镜、挑入点、抠人、新闻原文、原声 | `references/sourcing.md` |
-| 人物故事段落委托 bighead-collage、16:9 整屏穿插怎么接 | `references/bighead_insert.md` |
 | 文案、配音、原声剪口、音效、混音 | `references/audio.md` |
 | 交付前自检 | `references/review.md` |
 | 实践中踩过的坑 | `references/lessons.md` |
@@ -164,7 +163,6 @@ node scripts/render.mjs --dir <片子目录> --video --h 720
 | `footage.py` | `search` 搜片 / `get` 下载（可只下一段、只下音频）/ `sheet` 带时间码的联系表 / `scenes` 镜头切点 / `extract` 抽 30fps 帧序列 / `wave` 看原声剪口的响度 |
 | `stock.py` | Pexels/Pixabay 免费图库 `search` 搜 / `get` 下（视频+图片，视频默认 ≤1080p，`--4k` / `--size original` 取全画质），写作者/许可/页面侧车 `.json`；key 写 `local.json`。只做空镜、气氛镜、通用画面，不当当事人证据（`references/sourcing.md`） |
 | `gen_image.py` | 生成图（规矩 40）：只演拍不到的具体比喻物件或中性纹理，qwen-image 走 token-plan 网关，`--ref` 参考图、`--size` 默认 16:9；侧车记 prompt/模型/AI生成标记；key 写 `local.json` 的 `qianwen_api_key` |
-| `insert_bighead.py` | 把 bighead-collage 做好的 16:9 人物故事段落收进主片整屏穿插：30fps 1920×1080 帧 + counts 登记 + bite 音频（parts 按 bighead 时间线逐句生成字幕）+ 交接侧车，打印可抄的 bite/镜头写法（`references/bighead_insert.md`） |
 | `snap_news.mjs` | 新闻和报告原文截图：拦广告、去浮层、等字体加载完再量关键词的框（荧光笔用，坐标写进 `docs/news.json`） |
 | `commons_photo.py` | Commons 自由许可照片 search/get：验许可（只 PD/CC0/BY/BY-SA）、下载、写作者/许可/中文署名侧车 `.json` |
 | `commons_logo.py` | Commons 真实 Logo → PNG（SVG 服务端渲染）、429 退避重试、追加 `CREDITS.txt`；MISSING 换精确标题或 press kit |

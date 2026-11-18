@@ -67,8 +67,8 @@ async function page() {
   let b; try { b = await chromium.launch(opt); } catch (e) { b = await chromium.launch({...opt, channel: 'msedge'}).catch(() => { throw e; }); }
   const p = await b.newPage({viewport: {width: Wd, height: H}}); const errs = [], warns = [];
   p.on('pageerror', e => errs.push(e.message));
-  p.on('console', m => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errs.push(m.text()); else if (m.type() === 'warning' && /^\[(moves|kit)\]/.test(m.text())) warns.push(m.text()); });
-  p.on('requestfailed', q => errs.push('请求失败 ' + q.url())); p.on('response', s => { if (s.status() >= 400 && !/\/favicon\.ico$/.test(s.url())) errs.push(s.status() + ' ' + s.url()); });
+  p.on('console', m => { if (m.type() === 'error') errs.push(m.text()); else if (m.type() === 'warning' && /^\[(moves|kit)\]/.test(m.text())) warns.push(m.text()); });
+  p.on('requestfailed', q => errs.push('请求失败 ' + q.url())); p.on('response', s => { if (s.status() >= 400) errs.push(s.status() + ' ' + s.url()); });
   await p.goto(`http://127.0.0.1:${port}/${PAGE}`);
   try { await p.evaluate(() => window.ready); }
   catch (e) {
