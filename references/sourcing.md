@@ -15,6 +15,7 @@
 7. **生成图**（`scripts/gen_image.py`）：中性纹理；或者演一个拍不到的具体比喻物件（一枚币、一座楼、一条蛇吞大象），抠出来放进前后层，写实的标“AI生成”。不做电影感氛围大片。
    - `python scripts/gen_image.py "一枚金色硬币立在深蓝色细斜纹织物上，影棚柔光，写实产品摄影，暗背景" <片子>/assets/img/coin.png`：qwen-image 生成，默认 1664*928（16:9），`--size 宽*高` 改尺寸、`--ref <图>` 给参考图（可多个）。key 是 `local.json` 的 `qianwen_api_key`，按张计费，想好 prompt 再跑。
    - 侧车记 prompt/模型/AI生成标记；出处进 CREDITS.md。prompt 往 skill 的画风上靠：金色物件 + 深蓝织物 + 影棚光，和真素材同光同调色。
+8. **AI 数字人 / AI 视频**（`vidu_avatar.py` / `autodl_video.py`，仅用户明确要求时）：只作演绎或空镜/气氛镜，上屏标"AI生成"（规矩 44），**不当当事人、真人或真实证据**；数字主持人全片同一形象同一音色；task_id/模型/积分进侧车和 CREDITS。选路、提示词硬约束与抽帧验收见 `references/ai-presenter.md`。
 
 这些视频大多有版权，只做评论、解读性质的引用。**每条片都要把全部素材的出处写进简介**（格式参考 `examples/ai-burn-money/CREDITS.md`），并提醒用户存在被投诉的风险。
 

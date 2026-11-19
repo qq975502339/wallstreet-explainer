@@ -26,6 +26,7 @@ description: 华尔街式的财经/科技解读短片（1–3 分钟、16:9，�
   - `scripts/host_timeline.py`（口播逐字对齐成时间线，口播就是配音）、`scripts/sfx_synth.py`（合成风声、低音撞击、轻响）；`mix.py` 认得口播原声。
   - 例子：`examples/gold-rates/`（《打仗了，黄金为什么反而跌》，28 秒）。
 - 无人模式里"当事人抠像站在巨字前面"那一套：有了主持人，这些动作优先给她（`host` 的 `swap`）；当事人回到实拍、圆盘、原文里。`person` 场景照样能用。
+- 没有真人口播、用户明确要数字主持人时：读 `references/ai-presenter.md`（圆窗走 Vidu、大画幅走 AutoDL H3、旁白走 Token Plan TTS）；产物走同一套 host 管线，标"AI生成"、不得称真人（规矩 44）。
 
 ### 真人口播片怎么做
 
@@ -74,8 +75,8 @@ python scripts/mix.py <片子目录> --check
 
 | 站 | 做什么 | 给用户看什么 |
 |---|---|---|
-| 0 选题 | 题目要同时满足“现在热”和“看完能带走点什么”；事实先查清、留链接 | 两三个题目，每个附一句钩子 |
-| 1 文案 | 口语、第一人称，句句往下接；数字写成读法；插原声的地方先写铺垫句（`references/audio.md`） | 全文。点头之前不做正式配音 |
+| 0 选题 | 题目要同时满足“现在热”和“看完能带走点什么”；事实先查清、留链接；建事实账本 `<片子>/facts.md`（`references/facts_template.md`），来源分级见 `references/research.md` | 两三个题目，每个附一句钩子 |
+| 1 文案 | 口语、第一人称，句句往下接；数字写成读法；**台词里的每个数字都要有账本编号**；插原声的地方先写铺垫句（`references/audio.md`） | 全文。点头之前不做正式配音 |
 | 2 导演表 | 见下面“导演表”一节。模板档在“手法”一列写场景名；每一镜的素材从哪来也写上 | 要点：开头怎么抓人、每处怎么接、要不要加铺垫句、哪几处用当事人抠像 |
 | 3 素材 | 官方高清片 → 新闻原文 → 当事人原声 → 当事人抠像用的整段实拍（没有切点、有对得上台词的动作）；空镜和气氛镜用 Pexels/Pixabay 图库（`stock.py`）。先拼联系表看过，再定入点，逐帧查切点；单段只截要用的几秒（`references/sourcing.md`） | 3–4 张关键样帧（真素材 + 版式），方向对了再做整片 |
 | 4 配音和时间线 | 先用 `scripts/temp_voice.py` 出临时语音，或用 `scripts/timeline_stub.mjs` 按字数估出时间线，画面全部挂在字上；换正式配音后重新对齐 | — |
@@ -103,6 +104,7 @@ python scripts/mix.py <片子目录> --check
 - **手法**：模板档写场景名（`kit/README.md` 查）；手写档写 `moves.js` 里的手法名和它在这里说什么；都对不上写“手写”。先填前面几列，最后才填这一列。
 - 在“屏上”一列里顺手写清**镜头怎么走**：每次移动的落点是谁（推到谁、摇去找谁、什么时候拉回看全），以及哪几镜用当事人抠像。
 - 每一镜的素材从哪来（哪段实拍、哪篇原文、哪张照片）也记下来，交片时就是出处清单。
+- **需要的资料**：每镜的数字/原文/照片写账本编号（F/D/P，`references/facts_template.md`）；不在账本里的先查或换场景（`references/research.md` 的回改表）。出处和署名进简介，不上屏（规矩 16）。
 - 文案一字不改；一镜可以覆盖好几句话；时刻挂在词上（“说到‘七千’的那一刻”）。
 
 写完做一次“读表”检查：遮住文案和“多懂了什么”两列，只读“屏上”一列，看还讲不讲得通。再查有没有连续好几处硬切、有没有停不够的镜头。示例见 `examples/ai-burn-money/director.md`。
@@ -142,6 +144,8 @@ node scripts/render.mjs --dir <片子目录> --video --h 720
 |---|---|
 | 真人怎么融进来：七种样子、怎么走、挂墙、景别、声音 | `references/presenter.md`（先读） |
 | 必须守的规则（编号、能检查）、“这句话 → 场景”决策表 | `references/rules.md` |
+| 查资料、来源分级、写事实账本、查不到怎么回改 | `references/research.md` + `references/facts_template.md` |
+| 数字主持人/AI 视频怎么生成、选路、验收 | `references/ai-presenter.md` + `references/h3-prompt/` |
 | 模板档：场景、参数、镜头表写法、时刻、接法、颜色 | `kit/README.md`（图在 `kit/gallery/`） |
 | 想一镜该放什么、为什么、凭什么接下一镜 | `references/thinking.md` |
 | 动起来：为什么不像 PPT/AI、手法清单、手法 → 模板写法、手法库怎么选、量化目标、相机和抠像的代码手感 | `references/motion.md` |
@@ -166,6 +170,9 @@ node scripts/render.mjs --dir <片子目录> --video --h 720
 | `snap_news.mjs` | 新闻和报告原文截图：拦广告、去浮层、等字体加载完再量关键词的框（荧光笔用，坐标写进 `docs/news.json`） |
 | `commons_photo.py` | Commons 自由许可照片 search/get：验许可（只 PD/CC0/BY/BY-SA）、下载、写作者/许可/中文署名侧车 `.json` |
 | `commons_logo.py` | Commons 真实 Logo → PNG（SVG 服务端渲染）、429 退避重试、追加 `CREDITS.txt`；MISSING 换精确标题或 press kit |
+| `vidu_avatar.py` | Vidu S2-Avatar 数字主持人（圆窗）：单图+音频→说话视频；轮询/下载/侧车；err_code 处理见 ai-presenter.md |
+| `autodl_video.py` | AutoDL 托管 ComfyUI：默认 H3 文生视频（AI 空镜）；`--presenter` 切图+音频工作流（大画幅数字主持人，5–15s） |
+| `tts_tokenplan.py` | Token Plan 旁白（qwen-audio-3.0-tts-plus / longanlingxin）；.wav 自动转好喂 --asr；数字主持人驱动音频按句出 |
 | `matte.py` | 实拍逐帧抠人（GPU 上 ISNet 约 0.25 秒/帧），提示藏着的切点，只存人物外框那一块。没有显卡：`examples/google-apple-20b/matte_full.py`（CPU，同一个模型） |
 | `matte_clean.py` | 抠像后处理：去细线零碎、整列抹掉贴着的椅背、写出每帧头肩中心（放人时跟住他） |
 | `matte_despill.py` | 抠像去色边：原片背景色（比如会场蓝幕）渗进软边，换底后一圈蓝光。软边换色、收边、压溢色，写到新目录，先 `--check` 看单帧 |
