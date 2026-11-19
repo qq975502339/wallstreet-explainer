@@ -138,6 +138,10 @@ node scripts/render.mjs --dir <片子目录> --video --h 720
 - 手法在真片子里怎么用：`examples/ai-burn-money/film_lib.js`，第六版用底座和手法库重拼，和原版逐帧一致（素材不随仓库给，只用来读）。看它怎么在手写的画面里用手法、怎么写 why，不要照抄它的镜头。
 - 720p 看效果，1080p 只在定稿后渲一次。
 
+## 故事段（人物经历/创业故事/公司历史 → bighead 剪贴风横屏段）
+
+含人物与事件发展的段落用 `vendor/bighead-collage`（横屏改造版）做一段插回主片；其余段沿用 kit。选段规则、横屏安全区、插入管线（帧序列进主片时间线，字幕/旁白统一走主片）见 `references/story-mode.md`。工具：`scripts/story_from_film.mjs`（抽段建工程/登记帧数）、`scripts/story_anchor.py`（剪纸锚点）、`vendor/bighead-collage/scripts/frames.mjs --seq`（渲帧序列）。
+
 ## 读哪份
 
 | 在做什么 | 读 |
@@ -146,6 +150,7 @@ node scripts/render.mjs --dir <片子目录> --video --h 720
 | 必须守的规则（编号、能检查）、“这句话 → 场景”决策表 | `references/rules.md` |
 | 查资料、来源分级、写事实账本、查不到怎么回改 | `references/research.md` + `references/facts_template.md` |
 | 数字主持人/AI 视频怎么生成、选路、验收 | `references/ai-presenter.md` + `references/h3-prompt/` |
+| 故事段选段、横屏编排、插回主片 | `references/story-mode.md` + `vendor/bighead-collage/`（SKILL/style-card/references） |
 | 模板档：场景、参数、镜头表写法、时刻、接法、颜色 | `kit/README.md`（图在 `kit/gallery/`） |
 | 想一镜该放什么、为什么、凭什么接下一镜 | `references/thinking.md` |
 | 动起来：为什么不像 PPT/AI、手法清单、手法 → 模板写法、手法库怎么选、量化目标、相机和抠像的代码手感 | `references/motion.md` |
