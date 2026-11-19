@@ -32,7 +32,7 @@ description: 华尔街式的财经/科技解读短片（1–3 分钟、16:9，�
 
 ```
 node scripts/new_film.mjs <片子目录>
-（口播抽 30fps 帧到 assets/clips/host/，counts.json 登记 "host": 帧数；ffmpeg -i 口播.mp4 -vf fps=30,scale=1920:1080 assets/clips/host/%04d.jpg）
+（口播抽 30fps 帧到 assets/clips/host/，counts.json 登记 "host": 帧数；ffmpeg -i 口播.mp4 -vf fps=30,scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2 assets/clips/host/%04d.jpg）
 python scripts/matte.py <片子目录>/assets/clips/host <片子目录>/assets/cut/host      # 逐帧抠她（挂墙、换世界要用），然后 matte_clean.py
 （写 script.json：lines 写她实际说的话，一句一个 id，字幕就用这份）
 python scripts/host_timeline.py <口播.mp4> <片子目录>/script.json <片子目录>/timeline.json [--tail 1.0]

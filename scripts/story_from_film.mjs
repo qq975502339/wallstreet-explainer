@@ -78,7 +78,8 @@ if (a[0] === 'sfxmerge') {
   const sx = JSON.parse(fs.readFileSync(path.join(D, 'sfx.json'), 'utf8'));
   const mainSfxPath = path.join(film, 'sfx.json');
   const main = fs.existsSync(mainSfxPath) ? JSON.parse(fs.readFileSync(mainSfxPath, 'utf8')) : {events: []};
-  main.events = main.events || [];
+  const legacyFiles = new Set((sx.events || []).map(e => `story_${name}_${e.file}`));
+  main.events = (main.events || []).filter(x => x.storySource !== name && !(x.storySource == null && legacyFiles.has(x.file)));
   fs.mkdirSync(path.join(film, 'sfx'), {recursive: true});
   let added = 0;
   for (const e of sx.events || []) {
@@ -88,7 +89,7 @@ if (a[0] === 'sfxmerge') {
     fs.copyFileSync(src, path.join(film, 'sfx', dstName));
     const t = +(e.t + meta.t0main).toFixed(3);
     if (main.events.some(x => x.file === dstName && Math.abs(x.t - t) < .01)) continue;
-    main.events.push({...e, file: dstName, t}); added++;
+    main.events.push({...e, file: dstName, t, storySource: name}); added++;
   }
   main.events.sort((x, y) => x.t - y.t);
   fs.writeFileSync(mainSfxPath, JSON.stringify(main, null, 1));

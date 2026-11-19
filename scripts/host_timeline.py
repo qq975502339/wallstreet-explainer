@@ -57,8 +57,8 @@ for i in range(len(T)):
     E[i] = T[i] + .18
 rate = hit / len(mine)
 print(f'对上 {hit}/{len(mine)} 个字（{rate:.0%}）')
-if rate < .8: print('！对上的不到八成：script.json 的字和她说的差得多，时刻会不准。对照下面的识别结果改 script：\n  ' + ' / '.join(s['text'] for s in R))
-dur = float(subprocess.check_output(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', vid]))
+if rate < .8: sys.exit('！对上的不到八成：script.json 的字和她说的差得多，时刻会不准。对照下面的识别结果改 script：\n  ' + ' / '.join(s['text'] for s in R))
+dur = float(subprocess.check_output([bin('ffprobe'), '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', vid]))
 beats = []; k = 0
 for li, l in enumerate(S['lines']):
     chars = []; ks = []

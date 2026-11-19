@@ -7,6 +7,10 @@
 # 横屏改造：红框 = 16:9 安全区之外（x 100–1820 / y 80–870 之外；y≥870 是字幕带）。
 # 上游原版按抖音 9:16 界面遮挡给 ZONES；本副本改为横屏安全区，别的尺寸改 ZONES；画面尺寸不同会按比例换算。
 import glob, os, re, subprocess, sys, tempfile
+from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / 'scripts'))
+from local_bins import bin as local_bin
 from PIL import Image, ImageDraw
 
 ZONES = {                       # (x0, y0, x1, y1)，1920×1080 横屏坐标
@@ -23,13 +27,13 @@ def grab(src):
     if os.path.isdir(src):
         fs = glob.glob(os.path.join(src, "still_*.png"))
         return sorted(((float(re.findall(r"still_([\d.]+)\.png", f)[0]), f) for f in fs))
-    dur = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", src], capture_output=True, text=True).stdout)
+    dur = float(subprocess.run([local_bin("ffprobe"), "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", src], capture_output=True, text=True).stdout)
     ts = [float(x) for x in arg("--at").split(",")] if arg("--at") else [round(t * float(arg("--every", 4)) + .5, 2) for t in range(int(dur // float(arg("--every", 4))) + 1)]
     tmp = tempfile.mkdtemp(); out = []
     for t in ts:
         if t >= dur: continue
         f = os.path.join(tmp, f"{t:.2f}.png")
-        subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", str(t), "-i", src, "-frames:v", "1", f], check=True); out.append((t, f))
+        subprocess.run([local_bin("ffmpeg"), "-v", "error", "-y", "-ss", str(t), "-i", src, "-frames:v", "1", f], check=True); out.append((t, f))
     return out
 
 def main():

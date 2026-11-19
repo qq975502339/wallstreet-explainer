@@ -78,6 +78,18 @@ async function page() {
     console.error('页面没跑起来，先改这里：\n' + msg + (more.length ? '\n另外页面还报了：\n- ' + more.slice(0, 8).join('\n- ') : ''));
     await b.close(); process.exit(3);
   }
+  if (has('--check-fonts')) {
+    const problems = await p.evaluate(async () => {
+      const failed = [];
+      for (const face of document.fonts) {
+        try { await face.load(); if (face.status !== 'loaded') failed.push(face.family); }
+        catch { failed.push(face.family); }
+      }
+      return [...new Set(failed)];
+    });
+    if (problems.length) { console.error('字体加载失败：' + problems.join(', ')); await b.close(); if (server) server.close(); process.exit(2); }
+    console.log('声明的字体已加载；请同时检查具体文字是否缺字。');
+  }
   // 修缺陷9：--ai-label 自动烧录"含 AI 生成/演绎画面"角标（规矩 44 的可选强制层；静帧/视频/worker 都带）
   if (has('--ai-label')) await p.evaluate(() => {
     const d = document.createElement('div');

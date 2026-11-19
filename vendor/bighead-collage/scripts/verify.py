@@ -9,6 +9,10 @@
 逐句查：最后 40ms 的电平（> -40 dB 多半被截断）/ 开头静音时长
 不查：内容对不对、好不好看、声音好不好听——这些只能人判。"""
 import glob, json, re, subprocess, sys
+from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / 'scripts'))
+from local_bins import bin as local_bin
 
 try: sys.stdout.reconfigure(encoding="utf-8")
 except Exception: pass
@@ -18,7 +22,7 @@ def run(cmd): p = subprocess.run(cmd, capture_output=True, text=True, errors="re
 
 def pcm(path, sr=16000):
     import numpy as np
-    b = subprocess.run(["ffmpeg", "-v", "error", "-i", path, "-ac", "1", "-ar", str(sr), "-f", "s16le", "-"], capture_output=True).stdout
+    b = subprocess.run([local_bin("ffmpeg"), "-v", "error", "-i", path, "-ac", "1", "-ar", str(sr), "-f", "s16le", "-"], capture_output=True).stdout
     return np.frombuffer(b, np.int16).astype(np.float32) / 32768, sr
 
 def check_lines(paths):
@@ -35,28 +39,28 @@ def check_lines(paths):
         if head / sr > .45: warns.append(f"{p}：开头 {head / sr:.2f}s 静音，拼接前切掉（-30 dB rms）")
 
 def check_film(path, a):
-    j = json.loads(subprocess.run(["ffprobe", "-v", "error", "-show_format", "-show_streams", "-of", "json", path], capture_output=True, text=True).stdout or "{}")
+    j = json.loads(subprocess.run([local_bin("ffprobe"), "-v", "error", "-show_format", "-show_streams", "-of", "json", path], capture_output=True, text=True).stdout or "{}")
     if not j.get("streams"): fails.append("ffprobe 读不出：文件不完整或不是视频"); return
     v = [s for s in j["streams"] if s["codec_type"] == "video"]; au = [s for s in j["streams"] if s["codec_type"] == "audio"]
     if not v: fails.append("没有视频流"); return
     dur = float(j["format"]["duration"]); w, h = v[0]["width"], v[0]["height"]
     num, den = v[0].get("avg_frame_rate", "30/1").split("/"); fps = int(num) / max(1, int(den))
     print(f"{path}\n  {w}×{h}  {fps:.3f}fps  {dur:.2f}s  {int(j['format'].get('bit_rate', 0)) // 1000} kbps  音轨 {'有' if au else '没有'}")
-    if subprocess.run(["ffmpeg", "-v", "error", "-ss", str(max(0, dur - .3)), "-i", path, "-frames:v", "1", "-f", "null", "-"], capture_output=True).returncode:
+    if subprocess.run([local_bin("ffmpeg"), "-v", "error", "-ss", str(max(0, dur - .3)), "-i", path, "-frames:v", "1", "-f", "null", "-"], capture_output=True).returncode:
         fails.append("结尾解码失败（文件不完整）")
     want_dur = float(a[a.index("--dur") + 1]) if "--dur" in a else None
     expect = a[a.index("--expect") + 1] if "--expect" in a else None
     if want_dur and abs(dur - want_dur) > .15: fails.append(f"时长 {dur:.2f}s，期望 {want_dur:.2f}s")
     if expect and expect.lower() != f"{w}x{h}": fails.append(f"画幅 {w}×{h}，期望 {expect}")
-    bd = run(["ffmpeg", "-v", "info", "-i", path, "-vf", "blackdetect=d=0.2:pix_th=0.02", "-an", "-f", "null", "-"])
+    bd = run([local_bin("ffmpeg"), "-v", "info", "-i", path, "-vf", "blackdetect=d=0.2:pix_th=0.02", "-an", "-f", "null", "-"])
     for m in re.finditer(r"black_start:([\d.]+) black_end:([\d.]+) black_duration:([\d.]+)", bd):
         warns.append(f"黑帧 {float(m.group(3)):.2f}s @ {float(m.group(1)):.2f}s（设计内的换场可以忽略）")
-    fd = run(["ffmpeg", "-v", "info", "-i", path, "-vf", "freezedetect=n=-50dB:d=2", "-an", "-f", "null", "-"])
+    fd = run([local_bin("ffmpeg"), "-v", "info", "-i", path, "-vf", "freezedetect=n=-50dB:d=2", "-an", "-f", "null", "-"])
     for m in re.finditer(r"freeze_start: ([\d.]+)", fd):
         warns.append(f"画面完全冻住 >2s @ {float(m.group(1)):.2f}s（有意的静止可以忽略）")
     if not au: fails.append("没有音轨"); return
     lo, hi = (float(x) for x in a[a.index("--lufs") + 1].split(",")) if "--lufs" in a else (-15.0, -10.0)
-    loud = run(["ffmpeg", "-v", "info", "-nostats", "-i", path, "-vn", "-af", "ebur128=peak=true", "-f", "null", "-"])
+    loud = run([local_bin("ffmpeg"), "-v", "info", "-nostats", "-i", path, "-vn", "-af", "ebur128=peak=true", "-f", "null", "-"])
     summ = loud[loud.rfind("Summary:"):] if "Summary:" in loud else loud
     m = re.search(r"I:\s*(-?[\d.]+) LUFS", summ); pk = re.search(r"True peak:\s*Peak:\s*(-?[\d.]+|-inf) dBFS", summ, re.S)
     lufs = float(m.group(1)) if m else None; peak = float(pk.group(1)) if pk and pk.group(1) != "-inf" else None
@@ -74,19 +78,25 @@ def check_film(path, a):
 def check_sync(d, lang="zh", src=None):
     """画面用的字时刻 vs 配音真正发声的时刻。TTS 自报的词边界常常整体偏晚（edge-tts 实测晚 ~0.23s），
     画面全片慢半拍、处处"不卡点"，看静帧和自己排的时间表都看不出来。这里从配音波形里找每个音节的起音来对。"""
-    import numpy as np, librosa, os
-    T = json.load(open(os.path.join(d, "timeline.json"), encoding="utf-8"))
-    ins, flt = [], []
-    for i, b in enumerate(T["beats"]):
-        ins += ["-i", os.path.join(d, b["wav"])]; flt.append(f"[{i}]adelay={int(b['start'] * 1000)}:all=1[a{i}]")
-    n = len(T["beats"]); flt.append("".join(f"[a{i}]" for i in range(n)) + f"amix=inputs={n}:normalize=0,apad=whole_dur={T['duration']}[o]")
+    import numpy as np, os
+    with open(os.path.join(d, "timeline.json"), encoding="utf-8") as f:
+        T = json.load(f)
     tmp = os.path.join(d, "_voice_check.wav")
     if src:                                   # 从成片量（推荐交片前用）：直接拿 final.mp4 的声音，音效、配乐一起在里面
-        subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", src, "-vn", "-ar", "16000", "-ac", "1", tmp], check=True)
+        subprocess.run([local_bin("ffmpeg"), "-v", "error", "-y", "-i", src, "-vn", "-ar", "16000", "-ac", "1", tmp], check=True)
     elif T.get("voice_track"):                # 整条正式配音（voice_timeline.py 出的）：直接用这一条
-        subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", os.path.join(d, T["voice_track"]), "-ar", "16000", "-ac", "1", tmp], check=True)
+        subprocess.run([local_bin("ffmpeg"), "-v", "error", "-y", "-i", os.path.join(d, T["voice_track"]), "-ar", "16000", "-ac", "1", tmp], check=True)
     else:
-        subprocess.run(["ffmpeg", "-v", "error", "-y", *ins, "-filter_complex", ";".join(flt), "-map", "[o]", "-ar", "16000", "-ac", "1", tmp], check=True)
+        # 真人口播时间线的 wav 是 null（声音在 host 原片里）：拼不了逐句 wav，明确报错指路，不崩
+        missing = [b.get("id", i) for i, b in enumerate(T["beats"]) if not b.get("wav")]
+        if missing:
+            fails.append(f"音画检查无法拼配音：{len(missing)} 句缺 wav（{', '.join(map(str, missing[:5]))}…）；真人口播请用 --from 成片，整条配音请用 voice_track")
+            return
+        ins, flt = [], []
+        for i, b in enumerate(T["beats"]):
+            ins += ["-i", os.path.join(d, b["wav"])]; flt.append(f"[{i}]adelay={int(b['start'] * 1000)}:all=1[a{i}]")
+        n = len(T["beats"]); flt.append("".join(f"[a{i}]" for i in range(n)) + f"amix=inputs={n}:normalize=0,apad=whole_dur={T['duration']}[o]")
+        subprocess.run([local_bin("ffmpeg"), "-v", "error", "-y", *ins, "-filter_complex", ";".join(flt), "-map", "[o]", "-ar", "16000", "-ac", "1", tmp], check=True)
     # 按顺序对齐：整轨做语音识别（逐字时间），和画面用的字一一对上（difflib），再看差多少。
     # 不用"离最近的起音"：中文音节很密，什么时刻附近都有起音，整体晚 0.2s 也量不出来（试过）。
     import difflib
@@ -111,6 +121,10 @@ def check_sync(d, lang="zh", src=None):
     sm = difflib.SequenceMatcher(None, [c for c, _ in plan], [c for c, _ in heard], autojunk=False); dd = []
     for blk in sm.get_matching_blocks():
         for k in range(blk.size): dd.append(plan[blk.a + k][1] - heard[blk.b + k][1])
+    coverage = len(dd) / len(plan) if plan else 0
+    if coverage < .8:
+        fails.append(f"音画检查无法判断：匹配率 {coverage:.0%}，请核对识别结果和文案")
+        return
     dd = np.array(dd); med = float(np.median(dd)) if len(dd) else 0; off = float(np.mean(np.abs(dd) > .15)) if len(dd) else 0
     print(f"{d}: 对上 {len(dd)}/{len(plan)} 个字  画面时刻 − 听出来的时刻：中位 {med * 1000:+.0f}ms，|差|>150ms 的 {off:.0%}")
     if abs(med) > .1: fails.append(f"画面和配音整体错位 {med * 1000:+.0f}ms：字时刻要按真实发音重新对齐（temp_voice 默认会做：ASR 逐字对齐 + 吸附到起音）")
