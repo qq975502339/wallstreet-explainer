@@ -52,7 +52,10 @@
 - 用 `footage.py wave` 把每段原声的头尾查一遍：有没有砍掉半个字，有没有数字静音或爆音。
 - 用 `ffprobe` 查文件：有视频流、有音频流，时长对。
 - 素材出处清单是否齐全：每段实拍、每张截图、每个人物照片、每个音效。
-- 像素质检：`python scripts/audit.py <片子> <成片.mp4>`，flagged 必须为 0（或每条能解释）；有 flag 看 `out/audit/flagged.jpg` 的"视频|静帧"并排。静帧正常不代表视频正常。
+- 像素质检：`python scripts/audit.py <片子> <成片.mp4> --step 1`，flagged 必须为 0（或每条能解释）；有 flag 看 `out/audit/flagged.jpg` 的"视频|静帧"并排。静帧正常不代表视频正常；抽样间隔内的短穿帮靠关键动作连续帧（strip.py）补。
+- 音画对齐：`python vendor/bighead-collage/scripts/verify.py --sync <片子> --from <成片.mp4>`，排字时刻与听出来的时刻中位 ±100ms 内（修缺陷8：接进交片清单）。
+- 事实账本：`python scripts/facts_check.py <片子>` 退出码 0（结构齐全+上屏数字对账通过）。
+- AI 标注：含 AI 数字人/演绎/AI 空镜的片，交片渲 `--ai-label` 烧角标，或逐镜手查标注（规矩 44）。
 - 事实账本：每个上屏数字/原文/照片有 F/D/P 编号，链接和发布+查阅日期齐全；推算值标了"约/推算"；"未验证"区的内容确实没上屏；台词数字与账本一致。
 - AI 数字人/视频片段（如有）：整段听口型对台词 + `ffmpeg fps=6` 抽帧逐部位查（颈/喉/下巴/肩/衣/麦/背景）+ 首末帧构图比对；侧车 task_id/模型/AI 标记与 CREDITS 齐全；上屏标了"AI生成"（规矩 44）。验收表见 `references/ai-presenter.md`。
 

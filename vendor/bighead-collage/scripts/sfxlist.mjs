@@ -10,9 +10,12 @@ let local = {}; try { local = JSON.parse(fsSync.readFileSync(path.join(me, 'loca
 let pw; for (const t of [process.env.PLAYWRIGHT_FROM, local.playwright_from, path.join(me, '..', 'package.json'), path.join(process.cwd(), 'package.json')].filter(Boolean)) { try { pw = createRequire(t)('playwright'); break; } catch {} }
 if (!pw) throw new Error('找不到 playwright：在 skill 根目录 npm install && npx playwright install chromium');
 const mime = {'.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.ttf': 'font/ttf', '.webp': 'image/webp'};
-const srv = http.createServer(async (q, r) => { try { const p = path.join(here, decodeURIComponent(new URL(q.url, 'http://x').pathname)); r.writeHead(200, {'Content-Type': mime[path.extname(p)] ?? 'application/octet-stream'}).end(await fs.readFile(p)); } catch { r.writeHead(404).end(); } });
+const srv = http.createServer(async (q, r) => { try { const p = path.join(here, decodeURIComponent(new URL(q.url, 'http://x').pathname)); const b = await fs.readFile(p); r.writeHead(200, {'Content-Type': mime[path.extname(p)] ?? 'application/octet-stream'}).end(b); } catch { if (!r.headersSent) r.writeHead(404); r.end(); } });
 await new Promise(r => srv.listen(0, '127.0.0.1', r));
-const b = await pw.chromium.launch(); const p = await b.newPage({viewport: {width: 540, height: 960}});
+let T0 = {}; try { T0 = JSON.parse(fsSync.readFileSync(path.join(here, 'timeline.json'), 'utf8')); } catch {}
+const [aw0, ah0] = String(T0.aspect ?? '16:9').split(':').map(Number);   // 横屏改造：视口跟画幅（上游写死 540×960 竖屏）
+const vh0 = 720, vw0 = Math.round(vh0 * aw0 / ah0 / 2) * 2;
+const b = await pw.chromium.launch(); const p = await b.newPage({viewport: {width: vw0, height: vh0}});
 await p.goto(`http://127.0.0.1:${srv.address().port}/index.html`); await p.evaluate(() => window.ready);
 let ev = await p.evaluate(() => window.EVENTS || []); await b.close(); srv.close();
 try { ev = ev.concat(JSON.parse(await fs.readFile(path.join(here, 'sfx_extra.json'), 'utf8'))); } catch {}

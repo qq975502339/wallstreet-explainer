@@ -24,7 +24,9 @@ const a = process.argv.slice(2);
 if (a[0] === 'register') {
   const [, film, name] = a;
   const seq = path.join(film, 'assets', 'clips', `story_${name}`);
-  const n = fs.readdirSync(seq).filter(f => /^\d+\.jpg$/.test(f)).length;
+  // 修缺陷2：按连续序号数（0001 起直到断号），不数目录里全部 jpg（防旧帧混入）
+  let n = 0;
+  while (fs.existsSync(path.join(seq, `${String(n + 1).padStart(4, '0')}.jpg`))) n++;
   if (!n) { console.error('没有帧：', seq); process.exit(1); }
   const cp = path.join(film, 'assets', 'clips', 'counts.json');
   const counts = fs.existsSync(cp) ? JSON.parse(fs.readFileSync(cp, 'utf8')) : {};
@@ -34,6 +36,65 @@ if (a[0] === 'register') {
   process.exit(0);
 }
 
+// 老工程没有 story.json 时从本地时间线反推 ids/t0main（并补写 story.json）
+function readMeta(film, name) {
+  const D = path.join(film, 'assets', 'story', name);
+  const mp = path.join(D, 'story.json');
+  if (fs.existsSync(mp)) return JSON.parse(fs.readFileSync(mp, 'utf8'));
+  const local = JSON.parse(fs.readFileSync(path.join(D, 'timeline.json'), 'utf8'));
+  const T = JSON.parse(fs.readFileSync(path.join(film, 'timeline.json'), 'utf8'));
+  const ids = local.beats.map(b => b.id);
+  const t0main = T.beats.find(b => b.id === ids[0])?.start ?? 0;
+  const meta = {name, ids, t0main};
+  fs.writeFileSync(mp, JSON.stringify(meta, null, 1));
+  return meta;
+}
+// 修缺陷3：resync —— 主片换配音/重对齐后，一键重建故事段本地时间线（ids 存在 story.json）
+if (a[0] === 'resync') {
+  const [, film, name] = a;
+  const D = path.join(film, 'assets', 'story', name);
+  const meta = readMeta(film, name);
+  const T = JSON.parse(fs.readFileSync(path.join(film, 'timeline.json'), 'utf8'));
+  const beats = meta.ids.map(id => T.beats.find(b => b.id === id));
+  if (beats.some(b => !b)) { console.error('主片时间线缺句'); process.exit(1); }
+  const t0 = beats[0].start;
+  const local = {aspect: '16:9', fps: T.fps ?? 30, pre: 0,
+    duration: +(beats[beats.length - 1].end - t0 + .3).toFixed(3),
+    beats: beats.map(b => ({...b, start: +(b.start - t0).toFixed(3), end: +(b.end - t0).toFixed(3),
+      chars: b.chars.map(([c, t]) => [c, +(t - t0).toFixed(3)])}))};
+  fs.writeFileSync(path.join(D, 'timeline.json'), JSON.stringify(local, null, 1));
+  meta.t0main = t0; fs.writeFileSync(path.join(D, 'story.json'), JSON.stringify(meta, null, 1));
+  console.log('resync 完成', local.duration, '秒；接着重渲：frames.mjs --seq … && register', name);
+  process.exit(0);
+}
+// 修缺陷6：sfxmerge —— 故事段音效自动加偏移合并进主片 sfx.json（wav 拷进主片 sfx/ 加前缀防重名）
+if (a[0] === 'sfxmerge') {
+  const [, film, name] = a;
+  const D = path.join(film, 'assets', 'story', name);
+  const meta = readMeta(film, name);
+  const {spawnSync} = await import('node:child_process');
+  const r = spawnSync(process.execPath, [path.join(SK, 'vendor', 'bighead-collage', 'scripts', 'sfxlist.mjs'), '--dir', D], {stdio: 'inherit'});
+  if (r.status) process.exit(r.status);
+  const sx = JSON.parse(fs.readFileSync(path.join(D, 'sfx.json'), 'utf8'));
+  const mainSfxPath = path.join(film, 'sfx.json');
+  const main = fs.existsSync(mainSfxPath) ? JSON.parse(fs.readFileSync(mainSfxPath, 'utf8')) : {events: []};
+  main.events = main.events || [];
+  fs.mkdirSync(path.join(film, 'sfx'), {recursive: true});
+  let added = 0;
+  for (const e of sx.events || []) {
+    const src = path.join(D, sx.dir || 'sfx', e.file);
+    if (!fs.existsSync(src)) { console.warn('缺音效文件', src); continue; }
+    const dstName = `story_${name}_${e.file}`;
+    fs.copyFileSync(src, path.join(film, 'sfx', dstName));
+    const t = +(e.t + meta.t0main).toFixed(3);
+    if (main.events.some(x => x.file === dstName && Math.abs(x.t - t) < .01)) continue;
+    main.events.push({...e, file: dstName, t}); added++;
+  }
+  main.events.sort((x, y) => x.t - y.t);
+  fs.writeFileSync(mainSfxPath, JSON.stringify(main, null, 1));
+  console.log(`sfxmerge：+${added} 个音效进主片 sfx.json（偏移 ${meta.t0main}s）`);
+  process.exit(0);
+}
 const [film, name, idsArg] = a;
 if (!film || !name || !idsArg) { console.error('用法见文件头'); process.exit(1); }
 const ids = idsArg.split(',');
@@ -57,6 +118,7 @@ fs.mkdirSync(path.join(D, 'img'), {recursive: true});
 for (const f of ['stage.js', 'acts.js', 'look.css', 'landscape.js']) fs.copyFileSync(path.join(VEN, f), path.join(D, 'a', f));
 for (const f of fs.readdirSync(path.join(VEN, 'fonts'))) fs.copyFileSync(path.join(VEN, 'fonts', f), path.join(D, 'a', f));
 fs.writeFileSync(path.join(D, 'timeline.json'), JSON.stringify(local, null, 1));
+fs.writeFileSync(path.join(D, 'story.json'), JSON.stringify({name, ids, t0main: t0}, null, 1));
 fs.writeFileSync(path.join(D, 'index.html'), `<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="a/look.css"></head>
 <body><script src="a/stage.js"></script><script src="a/acts.js"></script><script src="a/landscape.js"></script><script src="scene.js"></script></body></html>
 `);

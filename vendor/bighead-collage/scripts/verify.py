@@ -91,8 +91,16 @@ def check_sync(d, lang="zh", src=None):
     # 不用"离最近的起音"：中文音节很密，什么时刻附近都有起音，整体晚 0.2s 也量不出来（试过）。
     import difflib
     from faster_whisper import WhisperModel
-    try: wm = WhisperModel(__import__('os').environ.get('WHISPER_MODEL', 'large-v3'), device="cuda", compute_type="float16")
-    except Exception: wm = WhisperModel(__import__('os').environ.get('WHISPER_MODEL', 'large-v3'), device="cpu", compute_type="int8")
+    # 模型三级fallback：WHISPER_DIR 本地目录 → HF 缓存快照（离线可用）→ 在线下载（默认 small，上游写死 large-v3 3GB）
+    mdl = os.environ.get('WHISPER_DIR') or os.environ.get('WHISPER_MODEL') or 'small'
+    if not os.path.isdir(mdl):
+        hub = os.path.join(os.environ.get('HF_HOME', os.path.join(os.path.expanduser('~'), '.cache', 'huggingface')), 'hub')
+        snap = os.path.join(hub, f'models--Systran--faster-whisper-{mdl}', 'snapshots')
+        if os.path.isdir(snap):
+            cand = [os.path.join(snap, s) for s in os.listdir(snap) if os.path.exists(os.path.join(snap, s, 'model.bin'))]
+            if cand: mdl = cand[0]
+    try: wm = WhisperModel(mdl, device="cuda", compute_type="float16")
+    except Exception: wm = WhisperModel(mdl, device="cpu", compute_type="int8")
     segs, _ = wm.transcribe(tmp, language=lang, word_timestamps=True)
     heard = []
     for sg in segs:

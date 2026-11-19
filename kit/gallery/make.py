@@ -15,7 +15,8 @@ TW, TH = 640, 360
 
 AT = {'discs': .93, 'number': .95, 'frames': .9, 'versus': .95, 'article': .93, 'chart': .6, 'share': .93, 'cards3d': .93,
       'ranking': .95, 'bars': .93, 'desk': .45, 'equation': .96, 'profile': .96, 'quote': .95, 'change': .96, 'stats': .96,
-      'compare': .96, 'headlines': .6, 'device': .71, 'statement': .96}
+      'compare': .96, 'headlines': .6, 'device': .71, 'statement': .96,
+      'line': .85, 'chain': .9, 'docpage': .9, 'tree': .9, 'calc': .95, 'stack': .95, 'grid': .9, 'bubble': .9}
 SKIP = {'custom'}
 # 总览的顺序和短名：跟 kit/README.md「选场景」的五组一样
 ORDER = [('number', '一个数'), ('equation', '算一笔账'), ('change', '从多少变多少'), ('stats', '几个数排开'), ('bars', '柱子对比'),
@@ -24,7 +25,9 @@ ORDER = [('number', '一个数'), ('equation', '算一笔账'), ('change', '从�
          ('person', '人站在巨字前'), ('profile', '人物出场'), ('quote', '原话'),
          ('footage', '全屏实拍'), ('montage', '钉住换实拍'), ('frames', '画框并列'), ('article', '原文刷黄'), ('desk', '新闻桌面'),
          ('popup', '反应窗'), ('headlines', '标题墙'), ('device', '产品界面'),
-         ('title', '片名'), ('agenda', '目录'), ('statement', '金句'), ('flash', '开头快闪')]
+         ('title', '片名'), ('agenda', '目录'), ('statement', '金句'), ('flash', '开头快闪'),
+         ('line', '真实日线'), ('chain', '因果链'), ('docpage', '文件原文页'), ('tree', '树状拆解'),
+         ('calc', '计算器'), ('stack', '钞票堆'), ('grid', '百格图'), ('bubble', '观众气泡')]
 
 
 def node(*a):

@@ -140,7 +140,7 @@ node scripts/render.mjs --dir <片子目录> --video --h 720
 
 ## 故事段（人物经历/创业故事/公司历史 → bighead 剪贴风横屏段）
 
-含人物与事件发展的段落用 `vendor/bighead-collage`（横屏改造版）做一段插回主片；其余段沿用 kit。选段规则、横屏安全区、插入管线（帧序列进主片时间线，字幕/旁白统一走主片）见 `references/story-mode.md`。工具：`scripts/story_from_film.mjs`（抽段建工程/登记帧数）、`scripts/story_anchor.py`（剪纸锚点）、`vendor/bighead-collage/scripts/frames.mjs --seq`（渲帧序列）。
+含人物与事件发展的段落用 `vendor/bighead-collage`（横屏改造版）做一段插回主片；其余段沿用 kit。选段规则、横屏安全区、插入管线（帧序列进主片时间线，字幕/旁白统一走主片）见 `references/story-mode.md`。工具：`scripts/story_from_film.mjs`（抽段建工程 / register 登记帧数 / sfxmerge 音效合并 / resync 换配音后重对齐）、`scripts/story_anchor.py`（剪纸锚点）、`vendor/bighead-collage/scripts/frames.mjs --seq`（渲帧序列，重渲自动清旧帧）。含 AI 画面的片交片可渲 `render.mjs --ai-label` 烧角标；音画对齐用 `vendor/bighead-collage/scripts/verify.py --sync`（需 faster-whisper 模型，国内设 HF_ENDPOINT=https://hf-mirror.com）。
 
 ## 读哪份
 

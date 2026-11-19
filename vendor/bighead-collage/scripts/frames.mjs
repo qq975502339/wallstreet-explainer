@@ -49,6 +49,8 @@ async function page() {
 // 横屏改造新增：--seq <dir> 渲 JPG 帧序列（%04d.jpg，从 1 起，与 kit 实拍帧惯例一致），供 wallstreet 主片当 footage 帧源插入。
 if (arg('--seq')) {
   const seq = path.resolve(arg('--seq')); await fs.mkdir(seq, {recursive: true});
+  // 修缺陷2：清掉旧帧，避免重渲后短段尾部取到上一版旧帧
+  for (const f of await fs.readdir(seq)) if (/^\d{4}\.jpg$/.test(f)) await fs.unlink(path.join(seq, f));
   const {b, p, errs} = await page();
   const fps0 = T.fps ?? 30, N0 = Math.ceil(T.duration * fps0);
   for (let f = 0; f < N0; f++) { await p.evaluate(t => window.seek(t), f / fps0); await p.screenshot({type: 'jpeg', quality: 96, path: path.join(seq, `${String(f + 1).padStart(4, '0')}.jpg`)}); }

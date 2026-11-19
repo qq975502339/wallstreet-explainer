@@ -78,6 +78,15 @@ async function page() {
     console.error('页面没跑起来，先改这里：\n' + msg + (more.length ? '\n另外页面还报了：\n- ' + more.slice(0, 8).join('\n- ') : ''));
     await b.close(); process.exit(3);
   }
+  // 修缺陷9：--ai-label 自动烧录"含 AI 生成/演绎画面"角标（规矩 44 的可选强制层；静帧/视频/worker 都带）
+  if (has('--ai-label')) await p.evaluate(() => {
+    const d = document.createElement('div');
+    d.textContent = '含 AI 生成/演绎画面';
+    Object.assign(d.style, {position: 'fixed', right: '24px', top: '20px', zIndex: 99999,
+      font: '600 28px MiSans, "Noto Sans SC", sans-serif', color: 'rgba(255,255,255,.85)',
+      background: 'rgba(10,12,16,.55)', padding: '6px 14px', borderRadius: '8px', letterSpacing: '.08em', pointerEvents: 'none'});
+    document.body.appendChild(d);
+  });
   return {b, p, errs, warns};
 }
 if (arg('--stills')) {
@@ -172,7 +181,7 @@ if (!has('--video')) { console.log('用 --stills 或 --video'); server.close(); 
 const RG = arg('--range'), F0 = RG ? Math.round(Number(RG.split(':')[0]) * fps) : 0, F1 = RG ? Math.min(N, Math.round(Number(RG.split(':')[1]) * fps)) : N;
 const K = Number(arg('--workers') ?? 6), size = Math.ceil((F1 - F0) / K), starts = []; const t0 = Date.now();
 await Promise.all(Array.from({length: K}, (_, i) => { const a = F0 + i * size, z = Math.min(F1, a + size); if (a >= z) return null; starts.push(a);
-  return new Promise((res, rej) => { const c = spawn(process.execPath, [fileURLToPath(import.meta.url), '--dir', here, '--page', PAGE, '--out', out, '--worker', `${a}:${z}`, '--port', String(port), '--h', String(H)], {stdio: 'inherit'}); c.on('exit', x => x === 0 ? res() : rej(new Error('worker ' + a))); }); }));
+  return new Promise((res, rej) => { const c = spawn(process.execPath, [fileURLToPath(import.meta.url), '--dir', here, '--page', PAGE, '--out', out, '--worker', `${a}:${z}`, '--port', String(port), '--h', String(H), ...(has('--ai-label') ? ['--ai-label'] : [])], {stdio: 'inherit'}); c.on('exit', x => x === 0 ? res() : rej(new Error('worker ' + a))); }); }));
 starts.sort((a, b) => a - b);
 await fs.writeFile(path.join(out, `list_${H}.txt`), starts.map(s => `file 'seg_${H}_${s}.mp4'`).join('\n'));
 const vout = path.join(out, RG ? `visual_${H}_range.mp4` : `visual_${H}.mp4`);

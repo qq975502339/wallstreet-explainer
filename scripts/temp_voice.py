@@ -83,8 +83,9 @@ def asr_words(wav):
     global whisper
     if whisper is None:
         from faster_whisper import WhisperModel
-        try: whisper = WhisperModel('large-v3', device='cuda', compute_type='float16')
-        except Exception: whisper = WhisperModel('large-v3', device='cpu', compute_type='int8')
+        from whisper_model import resolve
+        try: whisper = WhisperModel(resolve(), device='cuda', compute_type='float16')
+        except Exception: whisper = WhisperModel(resolve(), device='cpu', compute_type='int8')
     segs, _ = whisper.transcribe(str(wav), language='zh', word_timestamps=True)
     return [[w.word, float(w.start), float(w.end)] for s in segs for w in s.words]
 

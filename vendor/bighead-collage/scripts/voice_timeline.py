@@ -17,8 +17,12 @@ import numpy as np, librosa
 S = json.load(open(sp, encoding='utf-8')); Path('voice').mkdir(exist_ok=True)
 subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', src, '-ar', '48000', '-ac', '1', 'voice/main.wav'], check=True)
 from faster_whisper import WhisperModel
-try: m = WhisperModel(__import__('os').environ.get('WHISPER_MODEL', 'large-v3'), device='cuda', compute_type='float16')
-except Exception: m = WhisperModel(__import__('os').environ.get('WHISPER_MODEL', 'large-v3'), device='cpu', compute_type='int8')
+import sys as _sys
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[3] / 'scripts'))   # 缓存 fallback（默认 small，不写死 3GB large-v3）
+from whisper_model import resolve as _resolve
+try: m = WhisperModel(_resolve(), device='cuda', compute_type='float16')
+except Exception: m = WhisperModel(_resolve(), device='cpu', compute_type='int8')
 segs, _ = m.transcribe('voice/main.wav', language='zh', word_timestamps=True)
 W = [[w.word, float(w.start), float(w.end)] for s in segs for w in s.words]
 json.dump(W, open('voice/asr_words.json', 'w', encoding='utf-8'), ensure_ascii=False)

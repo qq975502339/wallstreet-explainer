@@ -62,8 +62,18 @@ def main():
     if not image or not (audio or text):
         print(__doc__); sys.exit(1)
     out = Path(opt('--out') or f'vidu_avatar_{int(time.time())}.mp4')
+    # 修缺陷4：付费前预检（key 格式/分辨率/素材存在与大小），不合格不提交
+    k0 = key()
+    if not k0.startswith('vda_'):
+        print('提醒：key 不以 vda_ 开头——确认没把型号标签（如 vidus2）拼进 key（曾因此 403）')
+    res = (opt('--resolution', '720p') or '720p').lower()
+    if res not in ('720p', '1080p', '2k'):
+        sys.exit(f'resolution「{res}」不在 720p/1080p/2k')
+    for v, kind in ((image, 'image'), (audio, 'audio')):
+        if v and not v.startswith(('http://', 'https://', 'data:')) and not Path(v).is_file():
+            sys.exit(f'{kind} 文件不存在：{v}')
     body = {'model': 'vidu-s2', 'image': media(image, 'image'),
-            'resolution': (opt('--resolution', '720p') or '720p').lower(), 'watermark': False}
+            'resolution': res, 'watermark': False}
     if audio:
         body['audio'] = media(audio, 'audio')
     else:

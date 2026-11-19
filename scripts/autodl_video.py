@@ -66,7 +66,34 @@ def media(v):
     return f'data:{mime};base64,{base64.b64encode(raw).decode("ascii")}'
 
 
+ENUMS = {   # 修缺陷4：付费提交前预检枚举（实测/上游文档确认的值；未知工作流跳过枚举检查）
+    T2V_WORKFLOW: ['480p横', '720p横', '736p横', '1080p横', '2K横', '480p竖', '720p竖', '736p竖', '1080p竖', '2K竖'],
+    PRESENTER_WORKFLOW: ['768p横', '480p横', '768p竖', '480p竖'],
+}
+
+
 def main():
+    # 修缺陷5：--resume <task_id> 只轮询+下载旧任务，不重新提交（超时后先查旧单，避免重复计费）
+    if opt('--resume'):
+        tid = opt('--resume')
+        wf = opt('--workflow') or T2V_WORKFLOW
+        out = Path(opt('--out') or f'autodl_{int(time.time())}.mp4')
+        interval, timeout = float(opt('--poll', 10)), float(opt('--timeout', 600))
+        deadline, last = time.time() + timeout, '?'
+        while time.time() < deadline:
+            p = req('GET', BASE + f'/comfyui_workflow/result/{tid}')
+            last = p.get('status')
+            if last == 'SUCCESS':
+                results = p.get('results') or []
+                if not results: sys.exit(f'SUCCESS 但无 results：{p}')
+                url = results[0].get('url'); break
+            if last == 'FAILED': sys.exit(f'FAILED：{p.get("message") or p}')
+            time.sleep(interval)
+        else:
+            sys.exit(f'{timeout}s 仍 {last}；继续等或去 AutoDL 控制台看 task {tid}')
+        out.parent.mkdir(parents=True, exist_ok=True)
+        with urllib.request.urlopen(url, timeout=180) as r: out.write_bytes(r.read())
+        print('resume 下载完成', out); return
     prompt = opt('--prompt')
     if not prompt:
         print(__doc__); sys.exit(1)
@@ -74,11 +101,19 @@ def main():
     wf = opt('--workflow') or (PRESENTER_WORKFLOW if presenter else T2V_WORKFLOW)
     out = Path(opt('--out') or f'autodl_{int(time.time())}.mp4')
     duration = int(opt('--duration', 5))
+    resolution = opt('--resolution', '768p横' if presenter else '736p横')
+    # 修缺陷4：预检（枚举/时长/素材），不合格不花钱提交；--force 跳过枚举检查
+    if wf in ENUMS and resolution not in ENUMS[wf] and '--force' not in sys.argv:
+        sys.exit(f'resolution「{resolution}」不在 {wf} 的已知枚举 {ENUMS[wf]}；改值或 --force（会花一次提交尝试）')
+    if not (5 <= duration <= 15) if presenter else not (1 <= duration <= 30):
+        sys.exit(f'duration {duration} 超范围（presenter 5–15 / t2v 1–30）')
     if presenter and not (opt('--ref-image') and opt('--ref-audio')):
-        sys.exit('--presenter 需要 --ref-image 和 --ref-audio（工作流可访问的 URL）')
-    if presenter and not 5 <= duration <= 15:
-        sys.exit('--presenter 的 duration 须为 5–15 的整数')
-    body = {'prompt': prompt, 'duration': duration, 'resolution': opt('--resolution', '736p横')}
+        sys.exit('--presenter 需要 --ref-image 和 --ref-audio（url 或本地文件自动 base64 流）')
+    for k in ('--ref-image', '--ref-audio'):
+        v = opt(k)
+        if v and not v.startswith(('http://', 'https://', 'data:')) and not Path(v).is_file():
+            sys.exit(f'{k} 文件不存在：{v}')
+    body = {'prompt': prompt, 'duration': duration, 'resolution': resolution}
     if opt('--ref-image'): body['ref_image_0'] = media(opt('--ref-image'))
     if opt('--ref-audio'): body['ref_audio_0'] = media(opt('--ref-audio'))
     if opt('--body'): body.update(json.loads(opt('--body')))   # 工作流额外字段透传
@@ -100,7 +135,7 @@ def main():
             sys.exit(f'FAILED：{p.get("message") or p}')
         time.sleep(interval)
     else:
-        sys.exit(f'{timeout}s 超时，最后状态 {last}；用同 task_id 复查，避免重复计费')
+        sys.exit(f'{timeout}s 超时，最后状态 {last}；任务可能仍在跑：用 --resume {tid} 查旧单下载，不要直接重提（避免重复计费）')
     out.parent.mkdir(parents=True, exist_ok=True)
     with urllib.request.urlopen(url, timeout=180) as r: out.write_bytes(r.read())
     meta = dict(provider='autodl', workflow_id=wf, task_id=tid, prompt=prompt, duration=duration,

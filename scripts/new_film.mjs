@@ -23,10 +23,11 @@ function copyLib() {
 }
 function linkFonts() {
   const to = path.join(D, 'fonts');
-  if (fs.existsSync(to)) return;
+  try { fs.readdirSync(to); return; } catch {}          // 联接/目录健康 → 不动
+  try { fs.rmdirSync(to); } catch {}                    // 悬空联接（字体目录搬走后）：只拆联接不删目标
   if (!fs.existsSync(FONTS)) { console.warn(`没找到字体目录 ${FONTS}：会退到系统字体（Noto Sans SC / 微软雅黑），样子不对。在 scripts/local.json 里写 fonts_dir，字体清单见 README`); return; }
   try { fs.symlinkSync(FONTS, to, 'junction'); }
-  catch { fs.mkdirSync(to); for (const f of fs.readdirSync(FONTS)) if (/\.(ttf|otf|woff2?)$/i.test(f)) fs.copyFileSync(path.join(FONTS, f), path.join(to, f)); }
+  catch { fs.mkdirSync(to, {recursive: true}); for (const f of fs.readdirSync(FONTS)) if (/\.(ttf|otf|woff2?)$/i.test(f)) fs.copyFileSync(path.join(FONTS, f), path.join(to, f)); }
 }
 
 if (SYNC) {

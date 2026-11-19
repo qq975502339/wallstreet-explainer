@@ -28,7 +28,9 @@
 node scripts/story_from_film.mjs <片子> <故事名> <句id,句id,…>   # 建 assets/story/<名>/ + 本地时间线（主片子集平移）
 （写 scene.js；备 img/ 剪纸；python scripts/story_anchor.py img/x.png）
 node vendor/bighead-collage/scripts/frames.mjs --dir <片子>/assets/story/<名> --seq <片子>/assets/clips/story_<名> --h 1080
-node scripts/story_from_film.mjs register <片子> <故事名>        # 帧数进 counts.json
+node scripts/story_from_film.mjs register <片子> <故事名>        # 帧数进 counts.json（按连续序号数，防旧帧）
+node scripts/story_from_film.mjs sfxmerge <片子> <故事名>        # 故事段音效自动加偏移合并进主片 sfx.json
+node scripts/story_from_film.mjs resync <片子> <故事名>          # 主片换配音/重对齐后重建故事段本地时间线（再重渲+register）
 （主片 film.js：{scene:'footage', clip:'story_<名>', from:0, push:[1,1], until:<故事段后第一句>, enter:'whip'|'through'|…}）
 ```
 
