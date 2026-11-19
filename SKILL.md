@@ -160,6 +160,7 @@ node scripts/render.mjs --dir <片子目录> --video --h 720
 | 查资料、来源分级、写事实账本、查不到怎么回改 | `references/research.md` + `references/facts_template.md` |
 | 数字主持人/AI 视频怎么生成、选路、验收 | `references/ai-presenter.md` + `references/h3-prompt/` |
 | 故事段选段、横屏编排、插回主片 | `references/story-mode.md` + `vendor/bighead-collage/`（SKILL/style-card/references） |
+| 每期画法设计、道具画风/生图/挂载点 | `references/treatment.md` + `references/prop-styles.md` + `kit/prop_styles.json` |
 | 模板档：场景、参数、镜头表写法、时刻、接法、颜色 | `kit/README.md`（图在 `kit/gallery/`） |
 | 想一镜该放什么、为什么、凭什么接下一镜 | `references/thinking.md` |
 | 动起来：为什么不像 PPT/AI、手法清单、手法 → 模板写法、手法库怎么选、量化目标、相机和抠像的代码手感 | `references/motion.md` |

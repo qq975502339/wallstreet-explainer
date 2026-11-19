@@ -651,6 +651,20 @@ node scripts/render.mjs --dir <片子> --video --h 720
 
 字幕样式不在 kit 里，在片子自己的 `film.css`（新片从 `starter/film.css` 拷：MiSans Medium 60px、白字带柔阴影、盒子顶在 y=936，和原版一样）。`new_film.mjs --sync` 只更新 `lib/` 和 `assets/kit/`，不动 `film.css`：老片子要新字幕，手动从 `starter/film.css` 拷。
 
+## 道具与画法（v1.4/v1.5 接入）
+
+规矩与画风目录：`references/treatment.md`（画法设计表/三条检查）、`references/prop-styles.md`（20 画风+阴影+生图流程）。能跑的完整例子：`compare/propdemo/`（五镜各演一种挂载点）。
+
+**通用道具层**：任何一镜写 `props:[{img,x,y,w,at,look,idle,path,copies,tint,…}]`（`at` 用 cue 字符串；`idle:'sway'|'breathe'|'shake'|'wobble'`；`path` 给坐标串则沿路径走+走路弹跳+自动镜像；`copies`+`cgap` 副本流；`tint:'gold'` 白线稿染金）。overlay 独立相机，`cam` 可给键帧。手写档直接 `K.prop(o,t,st)` 进 L 层（跟宿主同层保运动模糊）。
+
+**四个插槽**：`chart.rider:{src,w,orient,ay,look}` 骑线头；`share.img:'照片'` 切扇区；`links[].vehicle:{src,w,dur}` 沿航线开；`links[].dot:'图'`+`dw/dotN` 边上流副本；board `nodes[].type:'prop'`（`look/idle/ay`）。
+
+**照片垫底**：`chart.under` / `share.under` = `{img, br:.5, blur:3}`（压暗虚化慢推；board 原有 `under` 不变）。
+
+**道具生产**：`scripts/gen_image.py "<主体> <suffix> <tail>" out.png --ref kit/assets/prop_styles/<id>.png` → `scripts/prop_prep.py out.png -o <片>/assets/props/<选题>/ [--key|--luma]`（`--key` 暗底色键抠背景，rembg 不可用时的替代）。道具标 AI生成（规矩 40）、进账本 P 条。
+
+**--check 提醒**：图形场景没有本期专属物（under/rider/img/props/真 img/photo/logo/vehicle/dot 至少一样）会提醒——提醒不是禁令，答得上"为什么这期就该通用"就留。
+
 ## 接入版式（从小Lin说包装项目借来、换成本项目视觉语言）
 
 能跑的完整例子：`demo3/film.js`（下面每个各用一次）。`node scripts/new_film.mjs <目录> --demo3` 建出来就能渲。

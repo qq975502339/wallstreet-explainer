@@ -209,6 +209,66 @@ function scribble(o,st={}){
  return `<svg class="k-full" width="1920" height="1080" style="overflow:visible;${st.o!=null?`opacity:${f3(C(st.o))}`:''}"><path d="${d}" fill="none" stroke="${c}" stroke-width="${o.wd??5}" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="${f3(1-k)}" style="filter:drop-shadow(0 0 6px ${alpha(c,.45)})"/></svg>`;
 }
 
+// ---------- 道具（v1.4/v1.5 接入）：透明抠图小演员，任何场景都能放 ----------
+// 路径取点：u∈[0,1] 按弧长匀速；返回 [x,y,段角度deg,dx符号]
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+function polyAt(pts, u) {
+  const L = [0]; let tot = 0;
+  for (let i = 1; i < pts.length; i++) { tot += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); L.push(tot); }
+  const d = clamp(u) * tot; let i = 1; while (i < L.length - 1 && L[i] < d) i++;
+  const seg = L[i] - L[i - 1] || 1, f = (d - L[i - 1]) / seg;
+  const dx = pts[i][0] - pts[i - 1][0], dy = pts[i][1] - pts[i - 1][1];
+  return [pts[i - 1][0] + dx * f, pts[i - 1][1] + dy * f, Math.atan2(dy, dx) * 180 / Math.PI, Math.sign(dx) || 1];
+}
+// 戏服阴影（深底分支；look 见 kit/prop_styles.json；lift 0..1 浮起高度）
+const PROP_SH = { sticker25d: ['soft'], papercut: ['paper'], chalk: ['none'], clay: ['soft'], toy3d: ['soft'], vintage_ad: ['soft'], risograph: ['paper'], flat_editorial: ['soft'], mono_line: ['none'], comic_pop: ['paper'], product_photo: ['soft'], watercolor: ['paper'], engraving: ['paper'], woodcut: ['paper'], ink_wash: ['paper'], collage: ['paper'], lineart_white: ['glow', '255,255,255'], cutaway: ['soft'], neon: ['glow', '255,120,200'], pixel16: ['hard'] };
+function propShadow(look = 'product_photo', lift = 0) {
+  const [sh, gc] = PROP_SH[look] || PROP_SH.product_photo;
+  if (sh === 'none') return '';
+  if (sh === 'glow') return `drop-shadow(0 0 ${(6 + 4 * lift).toFixed(0)}px rgba(${gc},.55)) drop-shadow(0 0 ${(18 + 8 * lift).toFixed(0)}px rgba(${gc},.28))`;
+  if (sh === 'hard') return `drop-shadow(${(6 + 4 * lift).toFixed(0)}px ${(6 + 4 * lift).toFixed(0)}px 0 rgba(0,0,0,.55))`;
+  if (sh === 'paper') return `drop-shadow(0 ${(3 + 6 * lift).toFixed(0)}px ${(4 + 8 * lift).toFixed(0)}px rgba(0,0,0,${(0.55 + 0.1 * lift).toFixed(2)}))`;
+  return `drop-shadow(0 ${(12 + 10 * lift).toFixed(0)}px ${(16 + 14 * lift).toFixed(0)}px rgba(0,0,0,${(0.5 + 0.1 * lift).toFixed(2)}))`;
+}
+// K.prop(o, t, st)：o={img,x,y,w,h?,ax=.5,ay=1,at,look,idle:'sway'|'breathe'|'shake'|'wobble',
+//   path:[[x,y]…],pt0,pdur,hop,strides,orient(0..1 跟坡倾斜),flip:'auto',copies,cgap(秒),tint,show:[t0,t1],lift}
+// 入场守 kit 规矩（朴素淡入+小位移）；运动是状态驱动（path 进度由 t 算）；st 由宿主场景给（o/br/blur 等）
+function prop(o, t, st = {}) {
+  const t0 = o.at ?? 0;
+  if (t < t0 - 1e-6 || (o.show && (t < o.show[0] || t > o.show[1]))) return '';
+  const ap = appear(t, t0, .25, 14);
+  const w = o.w, h = o.h ?? o.w;
+  const one = (u, extraO) => {
+    let x = o.x, y = o.y, rot = o.rot ?? 0, sc = 1, flip = 1;
+    if (o.path && o.path.length > 1) {
+      const [px, py, ang, dir] = polyAt(o.path, u);
+      x = px; y = py;
+      if (o.orient) rot += ang * o.orient;
+      if (o.flip === 'auto' && dir < 0) flip = -1;
+      if (o.hop) y -= Math.abs(Math.sin(u * (o.strides ?? 6) * Math.PI)) * o.hop;
+    }
+    const it = Math.max(0, t - t0);
+    if (o.idle === 'sway') rot += Math.sin(it * 2.2) * 2.2;
+    else if (o.idle === 'breathe') sc *= 1 + Math.sin(it * 3.1) * .012;
+    else if (o.idle === 'shake') { x += Math.sin(it * 13) * 2; rot += Math.sin(it * 17) * 1.2; }
+    else if (o.idle === 'wobble') rot += Math.sin(it * 4.2) * 4 * Math.exp(-it / 2);
+    const inner = o.tint
+      ? `<div style="width:100%;height:100%;background:${col(o.tint)};-webkit-mask-image:url(${o.img});mask-image:url(${o.img});-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center"></div>`
+      : `<img src="${o.img}" style="width:100%;height:100%;object-fit:contain;display:block">`;
+    return `<div style="position:absolute;left:${f1(x)}px;top:${f1(y)}px;width:${f1(w)}px;height:${f1(h)}px;transform:translate(${-(o.ax ?? .5) * 100}%,${-(o.ay ?? 1) * 100}%) rotate(${f1(rot)}deg) scale(${f3(sc * flip)},${f3(sc)});filter:${propShadow(o.look, o.lift ?? 0)};opacity:${f3(clamp(ap.o * (st.o ?? 1) * extraO))}">${inner}</div>`;
+  };
+  if (o.copies > 1) {
+    let h = '';
+    for (let k = 0; k < o.copies; k++) {
+      const u = clamp((t - (o.pt0 ?? t0) - k * (o.cgap ?? .3)) / (o.pdur ?? 1));
+      if (t < (o.pt0 ?? t0) + k * (o.cgap ?? .3)) continue;
+      h += one(u, 1);
+    }
+    return h;
+  }
+  return one(clamp((t - (o.pt0 ?? t0)) / (o.pdur ?? 1)), 1);
+}
+
 // 连线（一组，世界坐标）：e={a:[x,y],b:[x,y],curve,color,style:'dots'|'dash'|'solid',w,k(画出来的进度),flow(流动偏移),arrow,o,pulse(0..1 亮点位置)}
 let UID=0;
 const qpt=(e,u)=>{const [ax,ay]=e.a,[bx,by]=e.b,[cx,cy]=ctrl(e);return [(1-u)**2*ax+2*(1-u)*u*cx+u*u*bx,(1-u)**2*ay+2*(1-u)*u*cy+u*u*by];};
@@ -309,7 +369,7 @@ async function use(F){
  // ---------- 参数名查一遍：写错的参数（lable、untill）模板不认识，会被静默丢掉，看不了图的模型根本发现不了 ----------
  // 每个场景只认自己的参数：help、defaults、need 里写了的，加上模板代码里读到的 p.xxx（board 家族的代码在 def.code 里）。
  // 嵌套在 items / nodes / steps 里的字段名，对照模板代码里出现过的所有名字。note 随便写备注，'_' 开头的不查，custom 不查。
- const FREE=['scene','until','says','enter','tone','glow','dust','throughAt','throughScale','note','host','pipIn'];   // host：'pip' / 'window'，真人口播层（host.js）
+ const FREE=['scene','until','says','enter','tone','glow','dust','throughAt','throughScale','note','host','pipIn','props','cam'];   // host：'pip' / 'window'，真人口播层（host.js）；props/cam：通用道具层（K.film 统一挂）
  let VOCAB;
  async function vocab(){
   if(VOCAB!==undefined)return VOCAB;
@@ -379,7 +439,14 @@ async function use(F){
    c.bg=(t,cam,camp,o={})=>enter==='flat'&&c.prev?MV.layFlat(t,{t0:c.t0,d:.7,html:MV.still(c.prev,c.t0-.01),why:sp.says}):L(cam,camp,o.z??.25,o.html??stage(o),{zi:0});   // 底层 z-index:0，写在后面的东西自然盖在上面
    if(def.prep)await def.prep(p,c);
    def.check?.(p,c);
-   const f=wrapEnter(def.make(p,c),c);
+    // 画法规矩（v1.4）：图形场景至少一样本期专属物，否则像 PPT 模板（提醒不是禁令）
+    const GRAPHIC=['number','equation','change','stats','bars','versus','chart','share','ranking','compare','discs','network','flow','timeline','map','cards3d','board','tree','calc','stack','grid','bubble','title','statement'];
+    if(GRAPHIC.includes(sp.scene)){const hasEp=sp.under||sp.rider||sp.img||A(sp.props).length||sp.photo||sp.logo||A(sp.nodes).some(n=>n.type==='prop'||n.img||n.photo||n.logo)||A(sp.items).some(n=>n.img||n.photo||n.logo)||A(sp.links).some(l=>l.vehicle||l.dot);
+     if(!hasEp)c.warn('图形场景没有本期专属物（under 照片 / rider / img 切照片 / props / 真 img/photo/logo / vehicle / dot 至少一样）：只有骨架+数字会像 PPT 模板，见 references/treatment.md');}
+   let f=wrapEnter(def.make(p,c),c);
+    // 通用道具层（v1.4/v1.5）：任何一镜挂 props:[{img,x,y,w,at,look,idle,path,…}]，独立 overlay 相机（sp.cam 可给键帧）
+    if(A(sp.props).length){const pc=camSeq(A(sp.cam).length?A(sp.cam):[{t:t0,cam:{x:960,y:540,s:1}}],.02);
+     const base=f;f=t=>base(t)+L(pc(t),pc(t-1/30),1.2,A(sp.props).map(o=>prop({...o,at:o.at!=null?T(o.at):t0},t,{})).join(''));}
    F.shot(t0,t1,f);
    out.push({i,scene:sp.scene,t0,t1,says:sp.says??'',enter,f,p});
    t0=t1;
@@ -434,5 +501,5 @@ async function use(F){
 
 window.KIT={use,scene,SCENES,FONTS:['500 60px Mi','600 60px Mi','60px Shu','60px Num','600 30px Mont','italic 600 30px Mont'],
  C,IO,E,EI,lerp,f1,f2,f3,SAFE,COLORS,BRAND,TONE,col,rgb,mixc,alpha,shade,num,full,fmtN,numText,numHTML,unitHTML,textW,fitPx,megaW,megaFit,vw,FAM,timer,track,appear,
- fit,unionBox,moveDur,camSeq,fx,stage,disc,card,tag,pill,mark,label,bignum,brow,frame,stamp,scribble,edges,qpt,person,halo,measure,loadImg,MEAS,ENTERS,hashf,dust,MAP,lonlat,cssScale};
+ fit,unionBox,moveDur,camSeq,fx,stage,disc,card,tag,pill,mark,label,bignum,brow,frame,stamp,scribble,prop,propShadow,polyAt,edges,qpt,person,halo,measure,loadImg,MEAS,ENTERS,hashf,dust,MAP,lonlat,cssScale};
 })();

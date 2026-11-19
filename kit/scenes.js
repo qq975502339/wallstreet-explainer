@@ -56,7 +56,7 @@ K.scene('number',{
 // board：同一个世界里换机位。东西摆在世界里，念到谁镜头去找谁；状态在原地变（变灰、打勾、嵌套、连线亮起）
 // 预设：discs（公司圆盘一排）、flow（流程卡片）、network（关系网/资金循环）、timeline（时间线）
 // =====================================================================================
-const NODE={disc:{r:120},card:{w:300,h:150},num:{size:150},pill:{size:40},img:{w:520,h:292},label:{size:40},person:{h:560},event:{w:420,h:170},pin:{}};
+const NODE={disc:{r:120},card:{w:300,h:150},num:{size:150},pill:{size:40},img:{w:520,h:292},prop:{w:200},label:{size:40},person:{h:560},event:{w:420,h:170},pin:{}};
 function boardMake(p,c){
  const t0=c.t0,nodes=(p.nodes??p.items??[]).map((n,i)=>({...NODE[n.type??p.type??'disc'],type:p.type??'disc',...n,id:n.id??`n${i}`,i}));
  if(!nodes.length)throw Error(`${c.tag}：nodes 是空的`);
@@ -158,6 +158,12 @@ function boardMake(p,c){
   if(axis!==false&&lay==='line'){const xs=nodes.map(n=>n.x),y=nodes[0].y;h+=`<div style="position:absolute;left:${f1(Math.min(...xs)-700)}px;top:${f1(y-2)}px;width:${f1(Math.max(...xs)-Math.min(...xs)+1400)}px;height:4px;background:linear-gradient(90deg,transparent,rgba(236,208,138,.75) 12%,rgba(236,208,138,.75) 88%,transparent);box-shadow:0 0 14px rgba(236,208,138,.5)"></div>`;}
   if(p.under){const u=p.under;h+=typeof u.html==='function'?u.html(t):u.html??`<img src="${u.img}" style="position:absolute;left:${f1(u.x??0)}px;top:${f1(u.y??0)}px;width:${f1(u.w??1920)}px;height:${f1(u.h??1080)}px;object-fit:cover;filter:brightness(${u.br??.6}) saturate(${u.sat??.8});opacity:${u.o??1}">`;}
   h+=edges(es);
+   // vehicle：道具沿航线开（v1.4 插槽）；dot：边上流道具副本（network 资金流换小图标）
+   for(const l of links){const st=lk[l.id];if(st==null||t<st)continue;const pe=ends(l);
+    if(l.vehicle){const u=((t-st)/(l.vehicle.dur??2.4))%1,[vx,vy,ang]=K.polyAt([pe.a,pe.b],u);
+     h+=K.prop({img:l.vehicle.src??l.vehicle,w:l.vehicle.w??120,x:vx,y:vy,ax:.5,ay:.5,rot:ang*(l.vehicle.orient??1),at:st,look:l.vehicle.look},t,{});}
+    if(l.dot){h+=K.prop({img:l.dot,path:[pe.a,pe.b],pt0:st,pdur:l.dotDur??1.2,copies:l.dotN??3,cgap:.4,w:l.dw??64,ax:.5,ay:.5,at:st,look:l.look},t,{});}
+   }
   const blurOf=n=>{if(p.dof===false||cc.s<1.15)return 0;const d=Math.hypot(n.x-cc.x,n.y-cc.y)*cc.s;return Math.min(1.8,Math.max(0,d-820)/260);};
   const order=[...nodes].sort((a,b)=>(nest[a.id]?1:0)-(nest[b.id]?1:0)||(a.type==='area'?-1:0)-(b.type==='area'?-1:0));
   for(const n of order){
@@ -173,6 +179,7 @@ function boardMake(p,c){
     if(n.type==='num'){const r=rolls[n.id],pv=num(n.value),val=r?lerp(num(r.from).n,pv.n,E((t-r.t)/Math.max(.2,r.t1-r.t))):pv.n;return bignum({x,y,value:pv,n:val,size:n.size,rolling:!!r,color:n.color},s2)+(n.brow?brow({x,y:y-n.size*.5-96,zh:n.brow,en:n.en},{o:oo,dy:ap.dy}):'');}
     if(n.type==='pill')return pill(q,s2);
     if(n.type==='img')return frame({x,y,w:n.w,h:n.h,src:n.src??n.img,label:n.label},s2);
+    if(n.type==='prop')return K.prop({img:n.src??n.img,x,y,w:n.w??200,h:n.h,at:born[n.id],look:n.look,idle:n.idle,ay:n.ay??1,ax:n.ax??.5,lift:n.lift},t,st);
     if(n.type==='label')return label({x,y,text:n.text,en:n.en,size:n.size},s2);
     if(n.type==='area'){const ac=K.col(n.color??'gold'),r=n.r??120;return `<div style="position:absolute;left:${f1(x-r)}px;top:${f1(y-r)}px;width:${f1(2*r)}px;height:${f1(2*r)}px;border-radius:50%;background:radial-gradient(circle,${alpha(ac,.55)} 0%,${alpha(ac,.22)} 45%,${alpha(ac,0)} 70%);mix-blend-mode:screen;${K.fx(s2,'translate(0,0)')}"></div>`+(n.label?label({x,y:y+r*.15,text:n.label,en:n.en,size:n.size??40},s2):'');}
     if(n.type==='pin'){const pc=K.col(n.color??'gold');return `<div style="position:absolute;left:${f1(x-13)}px;top:${f1(y-13)}px;width:26px;height:26px;border-radius:50%;background:radial-gradient(circle,#fff 0 30%,${pc} 45%,${alpha(pc,0)} 72%);box-shadow:0 0 22px ${pc};${K.fx(s2,'translate(0,0)')}"></div>`+(n.label?`<div class="k-label" style="left:${f1(x+30)}px;top:${f1(y)}px;font-size:${n.size??38}px;${K.fx(s2,'translate(0,-50%)')}">${n.label}${n.en?`<i style="text-align:left">${n.en}</i>`:''}</div>`:'');}
@@ -355,7 +362,7 @@ K.scene('chart',{
  need:[],
  help:{values:'[-50,-90,-140,...]：每个点的值（单位自己定，和 unit 一致）；写了 series 就不用 values',series:"[{v:[100,120,150,...], label:'收入', color:'green'}, {v:[60,85,120,...], label:'成本', color:'red'}]：多条线（剪刀差、交叉、缺口扩大）；第一条是主角（粗线、面积、累计数都跟它），右上角自动出图例。写了 series 就不用 values",x:"['2026','2027',...]：横轴标签，和 values 一样多",title:"图表标题：'OpenAI 累计净烧钱（预测）'",en:'标题下一行英文小字（以前叫 sub，还能用；number 的 sub 是另一回事：对比小卡）',
   kind:"'line'（默认）/'area' 线下面铺一层 / 'bar' 柱",color:"线的颜色：'red'（亏损，默认）/'green'/公司名",unit:"纵轴单位：'亿'",draw:"{at:'@b08:它还准备', until:'@b08:两千七百'}：线从第一个点画到最后一个点的时间",
-  total:"{label:'累计净烧', from:'$0', to:'-$2780亿'}：跟着线滚的累计数，放在线让出来的那块空白里",mark:"[{at:'@b09:2030', i:4, text:'2030'}]：在第 i 个点上亮一下"},
+  total:"{label:'累计净烧', from:'$0', to:'-$2780亿'}：跟着线滚的累计数，放在线让出来的那块空白里",mark:"[{at:'@b09:2030', i:4, text:'2030'}]：在第 i 个点上亮一下",rider:"{src:'assets/props/x.png', w:150, orient:.5, ay:.86, look:'product_photo'}：道具骑在第一条线线头上跟坡倾斜（本期专属小演员）",under:"{img:'assets/img/选题照片.jpg', br:.5, blur:3}：图表底下压本期话题真实照片（压暗虚化慢推）"},
  defaults:{kind:'area',color:'red'},minDur:1.8,flat:true,
  beats:p=>1+arr(p.mark).length,
  check(p,c){if(!p.series&&p.values==null)throw Error(`${c.tag}：chart 要 values 或 series`);if(p.series){const n0=arr(p.series)[0]?.v?.length;if(!n0)throw Error(`${c.tag}：series 第一条没有 v`);if(arr(p.series).some(s=>s.v.length!==n0))throw Error(`${c.tag}：series 每条线的点数要一样多`);if(p.x&&p.x.length!==n0)c.warn(`x 有 ${p.x.length} 个、series 有 ${n0} 个点，要一样多`);}
@@ -375,7 +382,7 @@ K.scene('chart',{
    X.map((l,i)=>`<text x="${f1(px(i))}" y="${pt+ph+52}" text-anchor="middle" font-family="${FAM.en}" font-weight="600" font-size="24" fill="#7d828b">${l}</text>`).join('');
   return t=>{
    const cc=cam(t),cp=cam(t-1/30),k=E((t-d0)/Math.max(.2,d1-d0)),u=k*(n-1),j=Math.min(n-2,Math.floor(u)),fr=u-j;
-   let svg='';
+   let svg='',riderHtml='';
    if(p.kind==='bar'){const bw=Math.min(90,pw/n*.5);V.forEach((v,i)=>{const g=E((t-d0-i*(d1-d0)/n*.7)/.5),yv=py(0)+(py(v)-py(0))*g;svg+=`<rect x="${f1(px(i)-bw/2)}" y="${f1(Math.min(yv,py(0)))}" width="${f1(bw)}" height="${f1(Math.abs(yv-py(0)))}" rx="6" fill="${lc}"/>`;});}
    else SR.forEach((s,si)=>{
     const pts=[];for(let i=0;i<n;i++){if(i<=u)pts.push([px(i),py(s.v[i])]);}if(n>1&&u<n-1&&u>0)pts.push([px(j)+(px(j+1)-px(j))*fr,py(s.v[j]+(s.v[j+1]-s.v[j])*fr)]);
@@ -384,13 +391,17 @@ K.scene('chart',{
     if(p.kind==='area'&&si===0)svg+=`<path d="${d} L${f1(head[0])} ${f1(py(0))} L${f1(pts[0][0])} ${f1(py(0))} Z" fill="url(#ka)" opacity=".9"/>`;
     svg+=`<path d="${d}" fill="none" stroke="${cl}" stroke-width="${si===0?7:5.5}" stroke-linejoin="round" stroke-linecap="round"/>`;
     if(t>=d0)svg+=`<circle cx="${f1(head[0])}" cy="${f1(head[1])}" r="${si===0?12:9}" fill="${cl}" stroke="#fff" stroke-width="${si===0?4:3}"/>${si===0?`<circle cx="${f1(head[0])}" cy="${f1(head[1])}" r="26" fill="${cl}" opacity=".18"/>`:''}`;
+    // rider：道具骑在第一条线的线头上，跟坡倾斜（v1.4 插槽）
+    if(si===0&&p.rider&&pts.length>1){const pv=pts[pts.length-2],ang=Math.atan2(head[1]-pv[1],head[0]-pv[0])*180/Math.PI;
+     riderHtml=K.prop({img:p.rider.src??p.rider,w:p.rider.w??150,x:head[0],y:head[1],ay:p.rider.ay??.86,rot:ang*(p.rider.orient??.5),at:d0,look:p.rider.look,idle:p.rider.idle},t,{});}
    });
    for(const m of marks){if(t<m.t)continue;const q=appear(t,m.t,.25,0),mx=px(m.i),my=py(V[m.i]);svg+=`<g opacity="${f3(q.o)}"><circle cx="${f1(mx)}" cy="${f1(my)}" r="17" fill="none" stroke="${lc}" stroke-width="4"/>${m.text?`<text x="${f1(mx)}" y="${f1(my-30)}" text-anchor="middle" font-family="${FAM.han}" font-size="30" fill="#2a2c31">${m.text}</text>`:''}</g>`;}
    let tt='';if(tot&&t>=d0-.05){const val=lerp(tot.a.n*(tot.a.neg?-1:1),tot.b.n*(tot.b.neg?-1:1),k),pv={...tot.b,neg:val<0,n:Math.abs(val)};
     tt=`<div style="position:absolute;${desc?`right:${pr+10}px`:`left:${pl+30}px`};top:${pt-6}px;text-align:${desc?'right':'left'}"><div style="font:32px ${FAM.han};color:#4a4d55;letter-spacing:.08em">${tot.l??''}</div><div class="k-num ${val<0||p.color==='red'?'red':''}" style="position:relative;font-size:118px;margin-top:6px;filter:none;justify-content:${desc?'flex-end':'flex-start'}">${K.numHTML(pv,{fixed:true})}</div></div>`;}
+   const underHtml=p.under?`<div class="k-full" style="transform:scale(${f3(1.06+.05*C((t-c.t0)/Math.max(1,c.d)))})"><img src="${p.under.img??p.under}" style="width:100%;height:100%;object-fit:cover;filter:brightness(${p.under.br??.5}) blur(${p.under.blur??3}px) saturate(.8)"></div>`:'';
    const su=c.enter==='flat'?E((t-c.t0-.3)/.55):1;   // 接 flat：上一镜倒成桌面，图表从桌面上立起来
-   const card=`<div class="k-chart" style="left:${cx}px;top:${cy}px;width:${cw}px;height:${ch}px;transform-origin:50% 100%;transform:translateY(${f1((1-su)*420)}px) perspective(2400px) rotateX(${f1((1-su)*26)}deg) rotateY(-2deg);opacity:${f3(C(su*2.2))}">${p.title?`<div class="ct">${p.title}</div>`:''}${(p.en??p.sub)?`<div class="cs">${p.en??p.sub}</div>`:''}<svg width="${cw}" height="${ch}" style="position:absolute;left:0;top:0"><defs><linearGradient id="ka" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${lc}" stop-opacity="${desc?.06:.32}"/><stop offset="1" stop-color="${lc}" stop-opacity="${desc?.32:.04}"/></linearGradient></defs>${grid}${svg}</svg>${tt}${legend}</div>`;
-   return c.bg(t,cc,cp,{tone:p.tone,glow:p.glow})+L(cc,cp,1,card);
+   const card=`<div class="k-chart" style="left:${cx}px;top:${cy}px;width:${cw}px;height:${ch}px;transform-origin:50% 100%;transform:translateY(${f1((1-su)*420)}px) perspective(2400px) rotateX(${f1((1-su)*26)}deg) rotateY(-2deg);opacity:${f3(C(su*2.2))}">${p.title?`<div class="ct">${p.title}</div>`:''}${(p.en??p.sub)?`<div class="cs">${p.en??p.sub}</div>`:''}<svg width="${cw}" height="${ch}" style="position:absolute;left:0;top:0"><defs><linearGradient id="ka" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${lc}" stop-opacity="${desc?.06:.32}"/><stop offset="1" stop-color="${lc}" stop-opacity="${desc?.32:.04}"/></linearGradient></defs>${grid}${svg}</svg>${tt}${legend}${riderHtml}</div>`;
+   return c.bg(t,cc,cp,{tone:p.tone,glow:p.glow})+(underHtml?L(cc,cp,.9,underHtml):'')+L(cc,cp,1,card);
   };
  }
 });
@@ -456,6 +467,8 @@ K.scene('share',{
  need:['parts'],
  help:{parts:"[{label:'流通股', value:30, color:'gold'}, {label:'大股东', value:70, color:'gray'}]：value 是占比（加起来不用正好 100）",focus:"[{at:'@b05:三成', i:0}]：讲到哪一块",
   pie:'true = 实心饼（不要环心）',hole:'环心比例 0..1（默认 .41；0 = 实心饼，.6 = 细环）',legend:'true = 图例（色块+名字+百分比）放右边一列，环左移；不写 = 标签绕环',
+  img:"'assets/img/物件俯视图.jpg'：把真实照片切成扇区当饼/环（讲到哪块哪块推出）；不写用渐变环",
+  under:"{img:'assets/img/选题照片.jpg', br:.5, blur:3}：环底下压本期话题真实照片",
   center:"{value:'30%', label:'流通'}：环中间的字（不写就显示讲到的那一块；实心饼没有中间）",title:'环上方一行眉题'},
  defaults:{tone:'navy'},minDur:1.6,
  beats:p=>arr(p.focus).length,
@@ -471,7 +484,8 @@ K.scene('share',{
    let svg='';
    for(const [i,s] of seg.entries()){const b1=Math.min(s.a1,-90+sw);if(b1<=s.a0)continue;const on=cur&&cur.i===i,mid=(s.a0+s.a1)/2*Math.PI/180,off=on?22*fk:0,cl=K.col(s.color??['gold','steel','teal','wine','slate'][i%5]);
     const dm=cur&&!on?lerp(1,.38,fk):1;
-    svg+=`<g transform="translate(${f1(Math.cos(mid)*off)} ${f1(Math.sin(mid)*off)})" style="filter:brightness(${f3(dm)}) saturate(${f3(cur&&!on?lerp(1,.5,fk):1)})"><path d="${arc(R-W,R,s.a0,b1)}" fill="url(#sg${i})" stroke="rgba(255,255,255,.35)" stroke-width="2"/></g>
+    if(p.img){svg+=`<g transform="translate(${f1(Math.cos(mid)*off)} ${f1(Math.sin(mid)*off)})" style="filter:brightness(${f3(dm)})"><clipPath id="sc${i}"><path d="${arc(0,R,s.a0,b1)}"/></clipPath><image href="${p.img}" x="${CX-R}" y="${CY-R}" width="${2*R}" height="${2*R}" clip-path="url(#sc${i})" preserveAspectRatio="xMidYMid slice"/></g>`;}
+    else svg+=`<g transform="translate(${f1(Math.cos(mid)*off)} ${f1(Math.sin(mid)*off)})" style="filter:brightness(${f3(dm)}) saturate(${f3(cur&&!on?lerp(1,.5,fk):1)})"><path d="${arc(R-W,R,s.a0,b1)}" fill="url(#sg${i})" stroke="rgba(255,255,255,.35)" stroke-width="2"/></g>
      <defs><radialGradient id="sg${i}" cx="${CX}" cy="${CY}" r="${R}" gradientUnits="userSpaceOnUse"><stop offset="${f3((R-W)/R)}" stop-color="${mixc(cl,'#000',.35)}"/><stop offset=".9" stop-color="${cl}"/><stop offset="1" stop-color="${mixc(cl,'#fff',.3)}"/></radialGradient></defs>`;
     if(sw>=360&&!leg){const lx=CX+Math.cos(mid)*(R+90+off),ly=CY+Math.sin(mid)*(R+70+off),lo=C((t-c.t0-.9)/.3)*dm;svg+=`<g opacity="${f3(lo)}"><text x="${f1(lx)}" y="${f1(ly)}" text-anchor="${Math.cos(mid)>.2?'start':Math.cos(mid)<-.2?'end':'middle'}" font-family="${FAM.han}" font-size="40" fill="#f1ead2">${s.label??''}</text><text x="${f1(lx)}" y="${f1(ly+58)}" text-anchor="${Math.cos(mid)>.2?'start':Math.cos(mid)<-.2?'end':'middle'}" font-family="${FAM.num}" font-size="56" fill="#f3e3b0">${Math.round(100*s.value/sum)}%</text></g>`;}}
    if(leg&&sw>=360)seg.forEach((s,i)=>{const on=cur&&cur.i===i,cl=K.col(s.color??['gold','steel','teal','wine','slate'][i%5]),lo=C((t-c.t0-.9)/.3)*(cur&&!on?lerp(1,.45,fk):1);
@@ -479,8 +493,9 @@ K.scene('share',{
    const ce=inner>0?(p.center??(cur?{value:`${Math.round(100*P[cur.i].value/sum)}%`,label:P[cur.i].label}:null)):null;
    let h=`<svg class="k-full" width="1920" height="1080" style="overflow:visible">${svg}</svg>`;
    if(ce){const q=cur?appear(t,cur.t,.3,0):appear(t,c.t0+.6,.3,0);h+=bignum({x:CX,y:CY-6,value:ce.value,size:150},{o:q.o})+label({x:CX,y:CY+82,text:ce.label??'',size:34},{o:q.o});}
+    const underHtml=p.under?`<div class="k-full" style="transform:scale(${f3(1.06+.05*C((t-c.t0)/Math.max(1,c.d)))})"><img src="${p.under.img??p.under}" style="width:100%;height:100%;object-fit:cover;filter:brightness(${p.under.br??.5}) blur(${p.under.blur??3}px) saturate(.8)"></div>`:'';
    const bw=browOf(p.title,p.en);if(bw)h+=brow({x:960,y:CY-R-128,zh:bw.zh,en:bw.en});
-   return c.bg(t,cc,cp,{tone:p.tone,glow:p.glow,rings:p.rings})+L(cc,cp,1,h);
+   return c.bg(t,cc,cp,{tone:p.tone,glow:p.glow,rings:p.rings})+(underHtml?L(cc,cp,.9,underHtml):'')+L(cc,cp,1,h);
   };
  }
 });
