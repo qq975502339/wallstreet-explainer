@@ -14,17 +14,15 @@
 | `8ad7ce0` | 用户 | 静态组件预览画廊 | 选场景看不到样张 | gallery/00_sheet | revert |
 | `229bea5` | 用户 | 素材单次使用禁循环 | 重复画面/循环穿帮 | review 人查 | revert |
 | `b96283b` | xiaolin v1.4/v1.5 + 审计收尾 | 道具通用层+四插槽+照片垫底+20画风+画法规矩；审计修复合批 | 每期像PPT模板；穿帮/侵权/假通过 | propdemo 五镜；tests | revert |
-| **本 commit（B 层）** | zenskill 思路+数据（自有重写）；howoneai MIT 文档 lineage | shot-grammar / reference-evidence / visual-checklist / layout-mapping / research 补 / treatment 补 / NOTICE / 本台账 | 分镜靠感觉、节奏无尺子、规则无判例、审片无清单、许可声明缺失 | 文档审读；tests 全绿；git status 仅 md | revert |
+| `bcc635e`+`fc9baa2`（B 层） | zenskill 思路+数据（自有重写）；howoneai MIT 文档 lineage | shot-grammar（12 句型+§1B 全 42 场景触发）/ reference-evidence / visual-checklist / layout-mapping / research 补 / treatment 补 / NOTICE / 本台账 | 分镜靠感觉、节奏无尺子、规则无判例、审片无清单、许可声明缺失 | 文档审读；42/42 机器核；tests 全绿 | revert |
+| `d76378d`（A 核心） | zenskill scripts（独立重写） | A1 aroll 体检 / A3 marks+check_cuts 覆盖门禁 / A4 检查包 / A5 章节预览+封面+分享 / A6 draft 按 B 表 / A7 流式 freeze-black-silence；verify --beat-json | 全片错半拍 / 穿帮裸奔 / 漏检 / 交付手工 | 19 测试绿；dup/fix/voice/marks/audit exit1/章节预览实测 | revert |
+| `a7033d9`（A2+A7 件） | zenskill fetch_footage（移植）+ 自建 | A2 八源检索+ND/NC/Editorial 排除+credits 登记+audit 缺许可 fail；selftest；music_candidates；SKILL/review 挂钩 | 侵权/漏署名/新环境踩坑/音乐盲选 | wikimedia 实搜带许可；缺许可 audit exit1；selftest 20 过 | revert |
 
 ## 被回滚 / 未接的备选池（不在仓库，按需重放）
 
 | 项 | 来源 | 防什么 | 状态 |
 |---|---|---|---|
-| A1 A-roll 体检（CFR/首帧重复/配音vs帧数/硬切/--fix） | zenskill prepare_aroll | 全片错半拍 | 曾移植未提交→用户回滚；可重放 |
-| A2 八源检索+ND/NC 门禁+credits | zenskill fetch_footage | 侵权/漏署名 | 同上 |
-| A3 弱口型/硬切自动标记+覆盖门禁 | zenskill compile+verify | 穿帮裸奔 | 同上 |
-| A4 交片检查包 / A5 交付便利 / A6 分镜草稿 / A7 流程件 | zenskill | 漏检/交付麻烦 | 同上 |
-| C1–C10（conform/进度条/条目语法/拍点床/掉帧咔哒/封面嵌帧/聊天版/ChatCut/selftest/淡入） | zenskill engine | 各类 | 未接 |
+| C1–C10（conform/进度条/条目语法/拍点床/掉帧咔哒/封面嵌帧/聊天版/ChatCut/淡入） | zenskill engine | 各类 | 未接（selftest/流式检查已随 A7 接） |
 | 环2（SyncNet 判弱+修口型/face-embedding 验收/ffmpeg 内置检测/FunClip/LLM 分镜/平台规范） | 调研方向 | AI 验收/黑帧冻帧 | 未接，需调研 |
 | 最后一层（J/L-cut/匹配剪辑/音色表/语义断句/素材索引/时间码批注/光敏/增量渲染/完播回流） | 通用工程 | 更顺更省 | 未接，自建而非借鉴 |
 
