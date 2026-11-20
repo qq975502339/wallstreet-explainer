@@ -53,6 +53,7 @@
 - 用 `ffprobe` 查文件：有视频流、有音频流，时长对。
 - 素材出处清单是否齐全：每段实拍、每张截图、每个人物照片、每个音效。
 - 像素质检：`python scripts/audit.py <片子> <成片.mp4> --step 1`，flagged 必须为 0（或每条能解释）；有 flag 看 `out/audit/flagged.jpg` 的"视频|静帧"并排。静帧正常不代表视频正常；抽样间隔内的短穿帮靠关键动作连续帧（strip.py）补。
+- 分镜语法与审片八问：按 `references/shot-grammar.md` 的句型表/节奏尺子（提醒值）核分镜与节奏；每组抽帧过 `references/visual-checklist.md` 八问（主体大/当前项最亮/标签≤2/不挡字幕脸窗/数字原样/本期专属物/穿帮覆盖/许可与AI标）。
 - 音画对齐：`python vendor/bighead-collage/scripts/verify.py --sync <片子> --from <成片.mp4>`，排字时刻与听出来的时刻中位 ±100ms 内（修缺陷8：接进交片清单）。
 - 事实账本：`python scripts/facts_check.py <片子>` 退出码 0（仅检查部分账本字段及 film.js 的 value 字符串；其他上屏内容须人工核对）。
 - AI 标注：含 AI 数字人/演绎/AI 空镜的片，交片渲 `--ai-label` 烧角标，或逐镜手查标注（规矩 44）。
