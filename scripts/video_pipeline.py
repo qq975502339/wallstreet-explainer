@@ -189,6 +189,44 @@ def stream_checks(path, freeze_sec=2.0, black_sec=0.5, silence_sec=3.0):
     except (OSError, subprocess.CalledProcessError): return [finding('review', '流式检查不可用，需人工复核。')]
 
 
+# ---------- C5 细痕：重复帧/掉帧/咔哒（A7 长阈值抓不到的一瞬坏） ----------
+def detail_checks(path, dup_thr=0.5, drop_mult=8, click_thr=0.45):
+    import numpy as np
+    path = Path(path)
+    if not path.is_file(): return [finding('review', '没有可检查的成片。')]
+    out = []
+    try:
+        pr = probe_media(path); v = next(s for s in pr['streams'] if s.get('codec_type') == 'video')
+        fa, fb = v['avg_frame_rate'].split('/'); fps = float(fa) / float(fb)
+        r = subprocess.run([tool('ffmpeg'), '-nostdin', '-v', 'error', '-i', str(path), '-vf', 'scale=160:90,format=gray', '-f', 'rawvideo', '-'], capture_output=True, check=True)
+        g = np.frombuffer(r.stdout, np.uint8); n = len(g) // (160 * 90)
+        g = g[:n * 160 * 90].reshape(n, 90, 160).astype(np.float32)
+        if n > 2:
+            d = np.abs(g[1:] - g[:-1]).mean(axis=(1, 2))
+            dups = [round((int(i) + 1) / fps, 2) for i in np.where(d < dup_thr)[0]]
+            out.append(finding('fail' if dups else 'pass', f'重复帧（stutter，相邻帧差<{dup_thr}）：{len(dups)} 处' + (f' @{dups[:8]}' if dups else '')))
+            med = float(np.median(d[d > 0])) if (d > 0).any() else 0.0
+            drops = []
+            if med > 0:
+                for i in np.where(d > drop_mult * med)[0]:
+                    if i + 1 < len(d) and d[i + 1] < 2 * med: drops.append(round((int(i) + 1) / fps, 2))
+            out.append(finding('review' if drops else 'pass', f'疑似掉帧（单帧突跳后回落）：{len(drops)} 处' + (f' @{drops[:8]}；硬切也会突跳，须人复核区分' if drops else '')))
+        else:
+            out.append(finding('review', '帧数不足，未查重复/掉帧。'))
+        has_a = any(s.get('codec_type') == 'audio' for s in pr['streams'])
+        if has_a:
+            ra = subprocess.run([tool('ffmpeg'), '-nostdin', '-v', 'error', '-i', str(path), '-map', '0:a:0', '-ac', '1', '-ar', '8000', '-f', 's16le', '-'], capture_output=True, check=True)
+            x = np.frombuffer(ra.stdout, dtype='<i2').astype(np.float64) / 32768.0
+            dx = np.abs(np.diff(x))
+            clicks = [round(int(i) / 8000, 2) for i in np.where(dx > click_thr)[0]]
+            out.append(finding('review' if clicks else 'pass', f'疑似咔哒（采样突跳>{click_thr}）：{len(clicks)} 处' + (f' @{clicks[:8]}；须人耳复核那几点' if clicks else '')))
+        else:
+            out.append(finding('review', '没有音轨，咔哒检查跳过。'))
+        return out
+    except (OSError, subprocess.CalledProcessError, ValueError, KeyError, StopIteration, json.JSONDecodeError) as e:
+        return [finding('review', f'细痕检查不可用，需人工复核：{e}')]
+
+
 # ---------- A3 音轨偏移（互相关，非口型） ----------
 def check_audio_sync(video, reference, tolerance_ms=42, max_offset_seconds=2.0):
     """成片音轨 vs 按成片时间轴对齐的正式配音；不验证口型/画面。独立实现（思路参考 zenskill verify）。"""
@@ -357,6 +395,7 @@ def make_report(data, root):
     checks['成片'] = inspect_file(root / final, True, data.get('expected_frames')) if final else [finding('review', '未指定成片，未检查播放、音轨与帧数。')]
     checks['音频响度'] = measure_loudness(root / final, data.get('loudness_target'), data.get('loudness_tolerance', 1.0), data.get('true_peak_limit')) if final else [finding('review', '未指定成片，未测量响度。')]
     checks['流式检查'] = stream_checks(root / final) if final else [finding('review', '未指定成片，未做冻帧/黑帧/静音检查。')]
+    checks['细痕检查'] = detail_checks(root / final) if final else [finding('review', '未指定成片，未做重复帧/掉帧/咔哒检查。')]
     reference = data.get('sync_reference')
     checks['音画同步'] = [check_audio_sync(root / final, root / reference, data.get('sync_tolerance_ms', 42), data.get('sync_max_offset_seconds', 2.0))] if final and reference else [finding('review', '未同时提供成片和已对齐正式配音，未测量音频偏移。')]
     checks['人工审看'] = [finding('review', '字幕、口型、镜头、事实与版权许可仍须人工审看；音轨比对不能验证画面或口型同步。'), finding('review', '审片八问见 references/visual-checklist.md；节奏尺子见 shot-grammar.md。')]

@@ -61,10 +61,35 @@ elif cmd == 'extract':
         src, t, d = spec[:3]; o = spec[3] if len(spec) > 3 else {}; z, ax, ay = o.get('zoom', 1), o.get('ax', .5), o.get('ay', .5)
         dst = out / name; dst.mkdir(parents=True, exist_ok=True)
         for p in dst.glob('*.jpg'): p.unlink()
+        pf = subprocess.run([bin('ffprobe'), '-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=avg_frame_rate', '-of', 'csv=p=0', str(base / src)], capture_output=True, text=True).stdout.strip()
+        try:
+            fa, fb = pf.split('/'); sfps = float(fa) / float(fb)
+            if abs(sfps - 30) > 0.01: print(f'⚠ {name} 源 {sfps:.2f}fps≠30：fps=30 会补/丢帧（快速运动会卡）；要顺滑先 footage.py conform {src} <副本> speed|dup')
+        except (ValueError, ZeroDivisionError): pass
         vf = (f'crop=iw/{z}:ih/{z}:(iw-iw/{z})*{ax}:(ih-ih/{z})*{ay},' if z != 1 else '') + 'scale=1920:1080:flags=lanczos,fps=30'
         run([bin('ffmpeg'), '-v', 'error', '-y', '-ss', f'{t:.3f}', '-i', str(base / src), '-t', f'{d:.3f}', '-vf', vf, '-q:v', '3', str(dst / '%04d.jpg')], check=True)
         counts[name] = len(list(dst.glob('*.jpg'))); print(name, counts[name], '帧')
     cp = out / 'counts.json'; old = json.loads(cp.read_text()) if cp.exists() else {}; old.update(counts); cp.write_text(json.dumps(old, indent=1))
+elif cmd == 'conform':
+    # C1 帧率对齐：源≠30fps 时两条路——speed=变速使每帧对齐（改动作速度，需人判断）；dup=补帧（接受卡）
+    src, dst = Path(sys.argv[2]), Path(sys.argv[3]); mode = sys.argv[4] if len(sys.argv) > 4 else 'speed'
+    if dst.exists(): raise SystemExit(f'已存在，不覆盖：{dst}')
+    pr = subprocess.run([bin('ffprobe'), '-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=avg_frame_rate,nb_frames', '-of', 'json', str(src)], capture_output=True, text=True, check=True)
+    st = json.loads(pr.stdout)['streams'][0]; a, b = st['avg_frame_rate'].split('/'); fps = float(a) / float(b)
+    if abs(fps - 30) <= 0.01:
+        print(f'源已是 {fps:.2f}fps，与时间线对齐，无需 conform'); raise SystemExit(0)
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    if mode == 'speed':
+        vf = f'setpts=PTS*{fps}/30'
+        has_a = subprocess.run([bin('ffprobe'), '-v', 'error', '-select_streams', 'a:0', '-show_entries', 'stream=codec_type', '-of', 'csv=p=0', str(src)], capture_output=True, text=True).stdout.strip()
+        cmd = [bin('ffmpeg'), '-v', 'error', '-y', '-i', str(src), '-vf', vf, '-r', '30']
+        if has_a: cmd += ['-af', f'atempo={30 / fps:.4f}']
+        cmd += ['-c:v', 'libx264', '-crf', '18', str(dst)]
+        print(f'变速对齐：{fps:.2f}→30fps，速度×{30 / fps:.3f}（动作变快/变慢，慢镜头慎用）；每源帧恰好一帧，不补不丢')
+    else:
+        cmd = [bin('ffmpeg'), '-v', 'error', '-y', '-i', str(src), '-vf', 'fps=30', '-c:v', 'libx264', '-crf', '18', str(dst)]
+        print(f'补帧对齐：{fps:.2f}→30fps（重复帧补差，快速运动会卡；慢镜头可接受）')
+    subprocess.run(cmd, check=True); print('已生成', dst)
 elif cmd == 'wave':
     import numpy as np
     f, a, b = sys.argv[2], float(sys.argv[3]), float(sys.argv[4])

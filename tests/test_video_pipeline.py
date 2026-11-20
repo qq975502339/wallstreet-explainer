@@ -57,7 +57,7 @@ def test_end_to_end_report_and_delivery(tmp_path):
     env = {**os.environ, 'PYTHONIOENCODING': 'utf-8'}
     film = tmp_path / 'film'; film.mkdir()
     video = film / 'sample.mp4'
-    subprocess.run(['ffmpeg', '-v', 'error', '-f', 'lavfi', '-i', 'color=c=blue:s=320x180:r=10:d=1', '-f', 'lavfi', '-i', 'sine=frequency=440:duration=1', '-c:v', 'libx264', '-c:a', 'aac', '-shortest', str(video)], check=True)
+    subprocess.run(['ffmpeg', '-v', 'error', '-f', 'lavfi', '-i', 'testsrc=size=320x180:r=10:d=1', '-f', 'lavfi', '-i', 'sine=frequency=440:duration=1', '-c:v', 'libx264', '-c:a', 'aac', '-shortest', str(video)], check=True)
     manifest = {'final_video': 'sample.mp4', 'expected_frames': 10, 'media': [{'path': 'sample.mp4', 'source': 'generated', 'license': 'test'}]}
     (film / 'production.json').write_text(json.dumps(manifest), encoding='utf8')
     audit = subprocess.run([sys.executable, str(cli), 'audit', str(film)], capture_output=True, text=True, encoding='utf8', env=env)

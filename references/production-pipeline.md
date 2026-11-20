@@ -63,6 +63,16 @@ python scripts/video_pipeline.py share <成片.mp4> <分享版.mp4> --height 720
 
 输出防覆盖；封面只导出帧不设计标题；构图/字幕/人物须人查。
 
+## C1 帧率对齐 / C5 细痕检查（已接的 C 层两项）
+
+```powershell
+python scripts/footage.py conform <源.mp4> <副本.mp4> speed|dup   # speed=变速使每源帧恰好一帧（改动作速度，慢镜头慎用）；dup=补帧（接受卡）；防覆盖；源=30fps 提示无需处理
+python scripts/footage.py extract clips.json                    # 源≠30fps 会提醒先 conform
+python scripts/video_pipeline.py audit <片子>                   # 报告含"细痕检查"：重复帧(stutter,逐帧差<0.5判fail)/疑似掉帧(突跳后回落,review人复核)/疑似咔哒(采样突跳>0.45,review人耳复核)
+```
+
+C5 与 A7 分工：A7 抓长坏（冻帧≥2s/黑帧≥0.5s/静音≥3s），C5 抓一瞬坏（0.03s 的顿/30ms 的啪）。掉帧/咔哒给 review+时间码供人复核（硬切也会突跳，机器不独断）。
+
 ## A7 流程件
 
 ```powershell
