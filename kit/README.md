@@ -665,6 +665,12 @@ node scripts/render.mjs --dir <片子> --video --h 720
 
 **--check 提醒**：图形场景没有本期专属物（under/rider/img/props/真 img/photo/logo/vehicle/dot 至少一样）会提醒——提醒不是禁令，答得上"为什么这期就该通用"就留。
 
+## 条目笔触六键与进度条（C3/C2 已接）
+
+`K.pen(k, text, opts)`：`x` 划线(过时)/`h` 荧光笔(正在讲)/`b` 大字(主角)/`p` 胶囊(标签,opts.color)/`m` 小灰字(辅助)/`a` 箭头(方向)。场景内认键：`statement.lines` 可写 `{k,t}` 对象；`equation.terms` 项加 `k:'x'|'h'`；`chain.items` 加 `k:'x'|'p'`；custom 直接 `K.pen`。全片样式统一，不用手写 HTML。
+
+进度条：`K.go({progress:true})` → 底部 6px 金色条按 t/T 走宽，全片一条连续（分段渲染天然连续）。短片可不开。
+
 ## 接入版式（从小Lin说包装项目借来、换成本项目视觉语言）
 
 能跑的完整例子：`demo3/film.js`（下面每个各用一次）。`node scripts/new_film.mjs <目录> --demo3` 建出来就能渲。

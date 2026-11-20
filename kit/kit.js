@@ -269,6 +269,18 @@ function prop(o, t, st = {}) {
   return one(clamp((t - (o.pt0 ?? t0)) / (o.pdur ?? 1)), 1);
 }
 
+// C3 条目笔触六键：x 划线(过时) / h 荧光笔(正在讲) / b 大字(主角) / p 胶囊(标签) / m 小灰字(辅助) / a 箭头(方向)
+function pen(k, t, o = {}) {
+  const s = String(t ?? '');
+  if (k === 'x') return `<span style="text-decoration:line-through;text-decoration-thickness:.06em;opacity:.55">${s}</span>`;
+  if (k === 'h') return `<span style="background:linear-gradient(transparent 52%,rgba(232,176,96,.5) 52% 94%,transparent 94%)">${s}</span>`;
+  if (k === 'b') return `<span style="font-weight:900;font-size:1.15em;background:linear-gradient(180deg,#fff4d2,#f6dc8e 55%,#dcb058);-webkit-background-clip:text;background-clip:text;color:transparent">${s}</span>`;
+  if (k === 'p') return `<span style="display:inline-block;padding:.06em .5em;border-radius:.6em;background:${col(o.color ?? 'teal')};color:#0b0e13;font-size:.62em;vertical-align:.16em;font-weight:600">${s}</span>`;
+  if (k === 'm') return `<span style="font-size:.5em;color:#9aa0ab;letter-spacing:.22em">${s}</span>`;
+  if (k === 'a') return `<span style="color:#e8cf86;font-size:.85em;padding:0 .18em">${s}</span>`;
+  return s;
+}
+
 // 连线（一组，世界坐标）：e={a:[x,y],b:[x,y],curve,color,style:'dots'|'dash'|'solid',w,k(画出来的进度),flow(流动偏移),arrow,o,pulse(0..1 亮点位置)}
 let UID=0;
 const qpt=(e,u)=>{const [ax,ay]=e.a,[bx,by]=e.b,[cx,cy]=ctrl(e);return [(1-u)**2*ax+2*(1-u)*u*cx+u*u*bx,(1-u)**2*ay+2*(1-u)*u*cy+u*u*by];};
@@ -495,11 +507,13 @@ async function use(F){
   if(out[0]&&out[0].t1>8)warn(`第一镜到 ${out[0].t1.toFixed(1)} 秒才换：开头要快，第一句话说完就进主体`);
  }
  // 整帧外面再包一层：暗角 + 每帧换位置的颗粒
- K.go=()=>F.go({frame:h=>{const f=Math.round((FB.cur.t??0)*30);return h+`<div class="k-vig" style="z-index:85"></div><div class="k-grain" style="z-index:86;background-position:${(f*137)%360}px ${(f*71)%360}px"></div>`;}});
+ K.go=(opts={})=>F.go({frame:h=>{const f=Math.round((FB.cur.t??0)*30);
+   const prog=opts.progress?`<div style="position:fixed;left:0;bottom:0;height:6px;width:${f3(Math.min(1,(FB.cur.t??0)/F.T.duration)*100)}%;background:linear-gradient(90deg,#e8cf86,#dcb058);z-index:90"></div>`:'';
+   return h+prog+`<div class="k-vig" style="z-index:85"></div><div class="k-grain" style="z-index:86;background-position:${(f*137)%360}px ${(f*71)%360}px"></div>`;}});
  return K;
 }
 
 window.KIT={use,scene,SCENES,FONTS:['500 60px Mi','600 60px Mi','60px Shu','60px Num','600 30px Mont','italic 600 30px Mont'],
  C,IO,E,EI,lerp,f1,f2,f3,SAFE,COLORS,BRAND,TONE,col,rgb,mixc,alpha,shade,num,full,fmtN,numText,numHTML,unitHTML,textW,fitPx,megaW,megaFit,vw,FAM,timer,track,appear,
- fit,unionBox,moveDur,camSeq,fx,stage,disc,card,tag,pill,mark,label,bignum,brow,frame,stamp,scribble,prop,propShadow,polyAt,edges,qpt,person,halo,measure,loadImg,MEAS,ENTERS,hashf,dust,MAP,lonlat,cssScale};
+ fit,unionBox,moveDur,camSeq,fx,stage,disc,card,tag,pill,mark,label,bignum,brow,frame,stamp,scribble,pen,prop,propShadow,polyAt,edges,qpt,person,halo,measure,loadImg,MEAS,ENTERS,hashf,dust,MAP,lonlat,cssScale};
 })();

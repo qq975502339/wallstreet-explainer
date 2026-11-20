@@ -94,7 +94,7 @@ K.scene('chain',{
     const cl=col(q.color??'steel');
     const media=q.img?`<img src="${q.img}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">`:'';
     const v=q.value?`<div class="ch-v" style="top:${q.img?'30%':'26%'}">${K.unitHTML(K.num(q.value))}</div>`:'';
-    h+=`<div class="ch-card${q.img?' img':''}" style="left:${f1(x-W/2)}px;top:${f1(y-H/2)}px;width:${W}px;height:${f1(H)}px;--c:${cl};${K.fx({o:a.o,dy:a.dy,br:dim,sc:on?1.04:1},'translate(0,0)')}">${media}${v}<div class="ch-t">${q.title}</div>${q.sub?`<div class="ch-s">${q.sub}</div>`:''}</div>`;
+    h+=`<div class="ch-card${q.img?' img':''}" style="left:${f1(x-W/2)}px;top:${f1(y-H/2)}px;width:${W}px;height:${f1(H)}px;--c:${cl};${K.fx({o:a.o,dy:a.dy,br:dim,sc:on?1.04:1},'translate(0,0)')}">${media}${v}<div class="ch-t"${q.k==='x'?' style="text-decoration:line-through;opacity:.6"':q.k==='p'?' style="display:inline-block;padding:.05em .5em;border-radius:.6em;background:var(--c);color:#0b0e13"':''}>${q.title}</div>${q.sub?`<div class="ch-s">${q.sub}</div>`:''}</div>`;
     if(i>0){const k=E(C((t-q.t+.15)/.3)),ax=x-W/2-G+14,aw=(G-28)*k;
      h+=`<svg style="position:absolute;left:${f1(ax)}px;top:${f1(y-22)}px;overflow:visible" width="${G}" height="44"><path d="M0 22 H${f1(Math.max(0,aw-14))}" stroke="#f3d27a" stroke-width="6" stroke-linecap="round"/>${k>.9?`<path d="M${f1(aw-22)} 8 L${f1(aw)} 22 L${f1(aw-22)} 36" fill="none" stroke="#f3d27a" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>`:''}</svg>`;}
    });

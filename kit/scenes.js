@@ -808,6 +808,8 @@ K.scene('equation',{
    for(const q of P){if(t<q.t-.001)continue;const a=q.t<=c.t0+.01?{o:1,dy:0}:appear(t,q.t,.25,14);
     if(q.op)h+=`<div style="position:absolute;left:${f1(q.cx)}px;top:${Y}px;transform:translate(-50%,-50%) translateY(${f1(a.dy)}px);font:${f1(size*.7)}px ${FAM.en};font-weight:300;color:#d9dde4;opacity:${f3(a.o)}">${OPS[q.op]??q.op}</div>`;
     else{const isR=q===R;h+=bignum({x:q.cx,y:Y,value:q.value,size:isR?size*1.15:size,color:isR?'gold':'white'},{o:a.o,dy:a.dy});
+      if(q.k==='x')h+=`<div style="position:absolute;left:${f1(q.cx-q.w*.4)}px;top:${Y}px;width:${f1(q.w*.8)}px;height:${f1(size*.06)}px;background:#cfd3da;opacity:${f3(a.o*.7)};transform:translateY(-50%)"></div>`;
+      if(q.k==='h')h+=`<div style="position:absolute;left:${f1(q.cx-q.w*.44)}px;top:${f1(Y+size*.18)}px;width:${f1(q.w*.88)}px;height:${f1(size*.4)}px;background:rgba(232,176,96,.35);opacity:${f3(a.o)};z-index:-1"></div>`;
      if(q.label)h+=label({x:q.cx,y:Y+size*.62+20,text:q.label,size:Math.max(30,size*.22)},{o:a.o});
      if(isR&&t>=q.t+.15){const k=E((t-q.t-.15)/.45);h+=`<div style="position:absolute;left:${f1(q.cx-q.w*.42)}px;top:${f1(Y+size*.5)}px;width:${f1(q.w*.84*k)}px;height:5px;border-radius:3px;background:linear-gradient(90deg,#f7e3a0,#e2bf5e);box-shadow:0 0 14px #e8c96a"></div>`;}}}
    const hb=bw?brow({x:P[0].cx-P[0].w/2+size*.05,y:by,zh:bw.zh,en:bw.en,anchor:'l'},{o:appear(t,c.t0,.3,0).o}):'';
@@ -932,7 +934,7 @@ K.scene('statement',{
  beats:p=>arr(p.at).length,
  check(p,c){for(const l of arr(p.lines))if(K.vw(l)>12)c.warn(`金句一行「${l}」太长：每行 10 字左右`);},
  make(p,c){
-  const Ls=arr(p.lines),hl=arr(p.hl),ats=arr(p.at).map(a=>c.at(a)),size=Math.min(...Ls.map(l=>fitPx(l,'han',p.size??150,1600,.06))),lh=size*1.32,Y0=480-(Ls.length-1)*lh/2;
+  const Lraw=arr(p.lines),Ls=Lraw.map(l=>typeof l==='object'&&l!==null?String(l.t??''):l),hl=arr(p.hl),ats=arr(p.at).map(a=>c.at(a)),size=Math.min(...Ls.map(l=>fitPx(l,'han',p.size??150,1600,.06))),lh=size*1.32,Y0=480-(Ls.length-1)*lh/2;
   const items=arr(p.items).map(x=>typeof x==='string'?{img:x}:x),gc=p.color==='red'?'linear-gradient(180deg,#ffd6d0,#ff7b72 55%,#d8443c)':'linear-gradient(180deg,#fff4d2,#f6dc8e 55%,#dcb058)';
   return t=>{
    const k=t-c.t0;let bg;
@@ -940,7 +942,7 @@ K.scene('statement',{
    else{const cc={x:960,y:540,s:1+.015*k};bg=c.bg(t,cc,cc,{tone:p.tone,glow:p.glow});}
    let h='';const B=browOf(p.brow);if(B)h+=`<div style="position:absolute;left:960px;top:${f1(Y0-size*.5-90)}px;transform:translateX(-50%);font:40px ${FAM.han};letter-spacing:.4em;color:#cfd3da;opacity:${f3(appear(t,c.t0,.3,0).o)}">${B.zh}</div>`;
    Ls.forEach((ln,i)=>{const ta=ats[i]??ats[0]??c.t0+.05,a=appear(t,ta,.3,14);if(a.o<=0)return;
-    let html=ln;for(const w of hl)html=html.split(w).join(`<span style="background:${gc};-webkit-background-clip:text;background-clip:text;color:transparent">${w}</span>`);
+    let html=(typeof Lraw[i]==='object'&&Lraw[i]&&Lraw[i].k)?K.pen(Lraw[i].k,ln,Lraw[i]):ln;for(const w of hl)html=html.split(w).join(`<span style="background:${gc};-webkit-background-clip:text;background-clip:text;color:transparent">${w}</span>`);
     h+=`<div style="position:absolute;left:960px;top:${f1(Y0+i*lh)}px;transform:translate(-50%,-50%) translateY(${f1(a.dy)}px) scale(${f3(1+.012*k)});font:${size}px ${FAM.han};letter-spacing:.06em;color:#fff;white-space:nowrap;opacity:${f3(a.o)};filter:drop-shadow(0 6px 22px rgba(0,0,0,.7))">${html}</div>`;});
    const lt=(ats.at(-1)??c.t0)+.35,lk=E((t-lt)/.5);if(lk>0)h+=`<div style="position:absolute;left:${f1(960-260*lk)}px;top:${f1(Y0+(Ls.length-1)*lh+size*.72)}px;width:${f1(520*lk)}px;height:4px;background:linear-gradient(90deg,transparent,#e8cf86,transparent)"></div>`;
    return bg+`<div class="k-full" style="z-index:30">${h}</div>`;
