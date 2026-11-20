@@ -164,6 +164,7 @@ node scripts/render.mjs --dir <片子目录> --video --h 720
 | 分镜句型表/节奏尺子/机位与手势 | `references/shot-grammar.md`（证据判例 `references/reference-evidence.md`） |
 | 审片八问/版式速查 | `references/visual-checklist.md` + `references/layout-mapping.md` |
 | 借鉴台账（来源/防什么/验收/回滚） | `references/borrow-ledger.md` + `NOTICE.md` |
+| A 层制作清单/体检/检索门禁/覆盖门禁/检查报告/章节/封面/分享/自检/音乐候选 | `references/production-pipeline.md` + `scripts/video_pipeline.py` + `scripts/fetch_footage.py` + `scripts/selftest.py` + `scripts/music_candidates.py` |
 | 模板档：场景、参数、镜头表写法、时刻、接法、颜色 | `kit/README.md`（图在 `kit/gallery/`） |
 | 想一镜该放什么、为什么、凭什么接下一镜 | `references/thinking.md` |
 | 动起来：为什么不像 PPT/AI、手法清单、手法 → 模板写法、手法库怎么选、量化目标、相机和抠像的代码手感 | `references/motion.md` |

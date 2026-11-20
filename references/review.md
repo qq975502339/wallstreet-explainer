@@ -56,6 +56,7 @@
 - 分镜语法与审片八问：按 `references/shot-grammar.md` 的句型表/节奏尺子（提醒值）核分镜与节奏；每组抽帧过 `references/visual-checklist.md` 八问（主体大/当前项最亮/标签≤2/不挡字幕脸窗/数字原样/本期专属物/穿帮覆盖/许可与AI标）。
 - 音画对齐：`python vendor/bighead-collage/scripts/verify.py --sync <片子> --from <成片.mp4>`，排字时刻与听出来的时刻中位 ±100ms 内（修缺陷8：接进交片清单）。
 - 事实账本：`python scripts/facts_check.py <片子>` 退出码 0（仅检查部分账本字段及 film.js 的 value 字符串；其他上屏内容须人工核对）。
+- 制作清单统一检查：`python scripts/video_pipeline.py audit <片子>` 退出码 0（接缝覆盖/数字口播/素材重复/章节/许可/成片解码/响度真峰值/冻帧黑帧静音/音轨偏移）；口播入库前先 `aroll` 体检；穿帮点用 `verify --sync --beat-json` + `marks` 自动喂 cuts；新环境先 `selftest.py`。详见 references/production-pipeline.md。
 - AI 标注：含 AI 数字人/演绎/AI 空镜的片，交片渲 `--ai-label` 烧角标，或逐镜手查标注（规矩 44）。
 - 事实账本：每个上屏数字/原文/照片有 F/D/P 编号，链接和发布+查阅日期齐全；推算值标了"约/推算"；"未验证"区的内容确实没上屏；台词数字与账本一致。
 - AI 数字人/视频片段（如有）：整段听口型对台词 + `ffmpeg fps=6` 抽帧逐部位查（颈/喉/下巴/肩/衣/麦/背景）+ 首末帧构图比对；侧车 task_id/模型/AI 标记与 CREDITS 齐全；上屏标了"AI生成"（规矩 44）。验收表见 `references/ai-presenter.md`。
