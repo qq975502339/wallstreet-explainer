@@ -75,7 +75,7 @@ def check_film(path, a):
         head = 20 * np.log10(np.sqrt(np.mean(y[:int(sr * .5)] ** 2)) + 1e-9)
         if head < -45: warns.append(f"前 0.5 秒几乎无声（{head:.0f} dB）：开头要有声音")
 
-def check_sync(d, lang="zh", src=None):
+def check_sync(d, lang="zh", src=None, beat_json=None):
     """画面用的字时刻 vs 配音真正发声的时刻。TTS 自报的词边界常常整体偏晚（edge-tts 实测晚 ~0.23s），
     画面全片慢半拍、处处"不卡点"，看静帧和自己排的时间表都看不出来。这里从配音波形里找每个音节的起音来对。"""
     import numpy as np, os
@@ -121,6 +121,16 @@ def check_sync(d, lang="zh", src=None):
     sm = difflib.SequenceMatcher(None, [c for c, _ in plan], [c for c, _ in heard], autojunk=False); dd = []
     for blk in sm.get_matching_blocks():
         for k in range(blk.size): dd.append(plan[blk.a + k][1] - heard[blk.b + k][1])
+    if beat_json:   # 逐句偏差导出（gate 前导出：匹配率不足时更需要逐句数据标弱句）
+        bi = [b["id"] for b in T["beats"] for c, t in b["chars"] if c.strip() and c not in "，。：、“”；,.:;!?！？ "]
+        agg = {}
+        for blk in sm.get_matching_blocks():
+            for k in range(blk.size): agg.setdefault(bi[blk.a + k], []).append(plan[blk.a + k][1] - heard[blk.b + k][1])
+        rows = [{"id": b["id"], "start": b["start"], "end": b["end"], "matched": len(agg.get(b["id"], [])),
+                 "total": sum(1 for x in bi if x == b["id"]),
+                 "median_ms": round(float(np.median(agg[b["id"]])) * 1000, 1) if agg.get(b["id"]) else None} for b in T["beats"]]
+        os.makedirs(os.path.dirname(os.path.abspath(beat_json)), exist_ok=True)
+        with open(beat_json, "w", encoding="utf-8") as f: json.dump({"beats": rows}, f, ensure_ascii=False, indent=1)
     coverage = len(dd) / len(plan) if plan else 0
     if coverage < .8:
         fails.append(f"音画检查无法判断：匹配率 {coverage:.0%}，请核对识别结果和文案")
@@ -134,7 +144,7 @@ def main():
     a = sys.argv[1:]
     if not a: sys.exit(__doc__)
     if a[0] == "--sync":
-        check_sync(a[1], a[a.index("--lang") + 1] if "--lang" in a else "zh", a[a.index("--from") + 1] if "--from" in a else None)
+        check_sync(a[1], a[a.index("--lang") + 1] if "--lang" in a else "zh", a[a.index("--from") + 1] if "--from" in a else None, a[a.index("--beat-json") + 1] if "--beat-json" in a else None)
     elif a[0] == "--lines":
         paths = [p for pat in a[1:] for p in (glob.glob(pat) or [pat])]; check_lines(paths)
     else:
