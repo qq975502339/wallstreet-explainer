@@ -15,8 +15,7 @@ PUN = set('，。？！：；、,.?!:;…—“”"\'（）() ')
 def asr(path):
     import numpy as np
     from faster_whisper import WhisperModel
-    from whisper_model import resolve
-    M = resolve()
+    M = os.environ.get('WHISPER_DIR') or os.environ.get('WHISPER_MODEL') or 'large-v3'   # 和 temp_voice.py 一致；也可以用 WHISPER_DIR 指本机的模型文件夹
     try: m = WhisperModel(M, device='cuda', compute_type='float16')
     except Exception: m = WhisperModel(M, device='cpu', compute_type='int8', cpu_threads=max(1, (os.cpu_count() or 4) - 2))
     pcm = subprocess.run([bin('ffmpeg'), '-v', 'error', '-i', path, '-ac', '1', '-ar', '16000', '-f', 'f32le', '-'], capture_output=True, check=True).stdout
