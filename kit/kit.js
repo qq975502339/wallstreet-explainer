@@ -457,7 +457,8 @@ async function use(F){
      if(!hasEp)c.warn('图形场景没有本期专属物（under 照片 / rider / img 切照片 / props / 真 img/photo/logo / vehicle / dot 至少一样）：只有骨架+数字会像 PPT 模板，见 references/treatment.md');}
    let f=wrapEnter(def.make(p,c),c);
     // 通用道具层（v1.4/v1.5）：任何一镜挂 props:[{img,x,y,w,at,look,idle,path,…}]，独立 overlay 相机（sp.cam 可给键帧）
-    if(A(sp.props).length){const pc=camSeq(A(sp.cam).length?A(sp.cam):[{t:t0,cam:{x:960,y:540,s:1}}],.02);
+    // vert 场景（v- / vp-）自己画 props（vpro.js 的 PROP），这里不再挂一遍，否则同一张图会画两次
+    if(A(sp.props).length&&!def.vert){const pc=camSeq(A(sp.cam).length?A(sp.cam):[{t:t0,cam:{x:960,y:540,s:1}}],.02);
      const base=f;f=t=>base(t)+L(pc(t),pc(t-1/30),1.2,A(sp.props).map(o=>prop({...o,at:o.at!=null?T(o.at):t0},t,{})).join(''));}
    F.shot(t0,t1,f);
    out.push({i,scene:sp.scene,t0,t1,says:sp.says??'',enter,f,p});

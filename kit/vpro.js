@@ -246,7 +246,7 @@ S('vp-bars',{real:()=>false,minDur:1.5,
   return t=>{const th=t-c.t0;let h=(p.unit?`<div class="v-cap" style="left:64px;top:${TOP(p)+10}px">${p.unit}</div>`:'')+`<div class="vp-base" style="left:60px;top:${by}px;width:${f1(960*oc(th/.4))}px"></div>`;
    its.forEach((it,i)=>{const k=oc((t-ts[i])/.8);if(k<=0)return;const hh=Math.max(14,mh*numOf(it.value)/mx)*k,x=x0+i*(w+36);
     h+=`<div class="vp-col${it.hl?' hl':''}" style="${KV(it.c??i)}left:${f1(x)}px;top:${f1(by-hh)}px;width:${f1(w)}px;height:${f1(hh)}px"><i></i><b></b></div><div class="vp-colv${it.hl?' hl':''}" style="${KV(it.c??i)}left:${f1(x-40)}px;top:${f1(by-hh-116)}px;width:${f1(w+80)}px;transform:${Z(50)}">${cnt(it.value,k)}</div><div class="vp-coll" style="left:${f1(x-40)}px;top:${by+18}px;width:${f1(w+80)}px;font-size:${fitU(it.label,44,w+70)}px;opacity:${f3(c01((t-ts[i])*5))}">${it.label}</div>`;});
-   return base(p,c,t)+hd(p,th)+T3(th,h,p)+ava(p,t);};}
+   return base(p,c,t)+hd(p,th)+props(p,c,t,'back')+T3(th,h,p)+props(p,c,t,'front')+ava(p,t);};}
 });
 
 // ====== 10 vp-versus：两边对着看 ======
@@ -257,7 +257,7 @@ S('vp-versus',{real:p=>!!(p.left?.img||p.right?.img),minDur:1.5,
  draw(p,c){markAva(p);const L=p.left,Rr=p.right,tl=c.at(L.at)??c.t0+.3,tr=c.at(Rr.at)??c.t0+1,tw=p.win?c.at(p.win.at)??tr+.8:1e9,top=TOP(p)+60,ch=p.left.img||p.right.img?780:660;
   const card=(o,sd,ta,t)=>{const k=tail(t-ta+.08,.11);if(k<=0)return '';const win=oc((t-tw)/.3),lose=p.win&&p.win.side!==(sd<0?'left':'right'),hit=p.win&&!lose;
    return `<div class="vp-vs${hit&&win>0?' on':''}" style="${KV(o.c??(sd<0?1:0))}left:${f1((sd<0?44:556)+sd*620*(1-k))}px;top:${top}px;height:${ch}px;transform:rotateY(${sd*-17}deg) rotate(${sd*-2}deg) ${Z(hit&&win>0?70*win:0)};filter:grayscale(${f3(lose?win:0)}) brightness(${f3(1-(lose?.4*win:0))})">${o.img?`<div class="ph"><img src="${o.img}"></div>`:''}<b style="font-size:${fitH(o.name,72,420)}px">${o.name}</b><em style="font-size:${fitU(String(o.value),150,420)}px">${cnt(o.value,oe((t-ta)/.9))}</em><u>${o.sub??''}</u></div>`;};
-  return t=>{const th=t-c.t0,kv=oe((t-tr)/.2);return base(p,c,t)+hd(p,th)+T3(th,card(L,-1,tl,t)+card(Rr,1,tr,t)+(t>tr-.02?`<div class="vp-vsb" style="top:${top+ch/2-64}px;transform:${Z(90)} scale(${f3(1+1.4*(1-kv))});opacity:${f3(c01((t-tr)*8))}">VS</div>`:''),p,{ry:0,rx:8,rz:0})+ava(p,t);};}
+  return t=>{const th=t-c.t0,kv=oe((t-tr)/.2);return base(p,c,t)+hd(p,th)+props(p,c,t,'back')+T3(th,card(L,-1,tl,t)+card(Rr,1,tr,t)+(t>tr-.02?`<div class="vp-vsb" style="top:${top+ch/2-64}px;transform:${Z(90)} scale(${f3(1+1.4*(1-kv))});opacity:${f3(c01((t-tr)*8))}">VS</div>`:''),p,{ry:0,rx:8,rz:0})+props(p,c,t,'front')+ava(p,t);};}
 });
 
 // ====== 11 vp-chain：一环扣一环 ======
@@ -270,7 +270,7 @@ S('vp-chain',{real:p=>A(p.items).some(i=>i.img),minDur:2,
    its.forEach((it,i)=>{const k=tail(t-ts[i]+.08,.1);if(k<=0)return;const y=top+i*(ch+gap),last=i===n-1;
     if(i)h+=`<div class="vp-arrow" style="left:520px;top:${f1(y-gap+6)}px;height:${f1((gap-12)*oc((t-ts[i]+.1)/.25))}px"><i></i></div>`;
     h+=`<div class="vp-link${last?' hl':''}" style="${KV(it.c??i)}left:${f1(70+(i%2?1:-1)*900*(1-k))}px;top:${f1(y)}px;height:${f1(ch)}px;transform:${Z(last?60:i*14)}">${it.img?`<span class="ph"><img src="${it.img}"></span>`:`<span class="no">${i+1}</span>`}<div><b style="font-size:${fitH(it.title,74,it.value?480:700)}px">${it.title}</b><u>${it.sub??''}</u></div>${it.value?`<em>${cnt(it.value,oe((t-ts[i])/.8))}</em>`:''}</div>`;});
-   return base(p,c,t)+hd(p,th)+T3(th,h,p)+ava(p,t);};}
+   return base(p,c,t)+hd(p,th)+props(p,c,t,'back')+T3(th,h,p)+props(p,c,t,'front')+ava(p,t);};}
 });
 
 // ====== 12 vp-list：几条要点 ======
@@ -282,7 +282,7 @@ S('vp-list',{real:()=>false,minDur:1.5,
   return t=>{const th=t-c.t0;let h='';
    its.forEach((it,i)=>{const k=(t-ts[i]+.04)/.3;if(k<=0)return;const m=it.mark??String(i+1);
     h+=`<div class="vp-row${it.hl?' hl':''}" style="${KV(it.c??i)}left:60px;top:${f1(top+i*(rh+24))}px;height:${f1(rh)}px;opacity:${f3(c01(k*4))};transform:${Z(it.hl?56:0)} rotateX(${f1(-88*(1-oe(k)))}deg)"><span class="bd ${m==='ok'?'ok':m==='no'?'no':''}">${m==='ok'?'✓':m==='no'?'✕':m}</span><div><b style="font-size:${fitH(it.text,80,760)}px">${it.text}</b>${it.sub?`<u>${it.sub}</u>`:''}</div></div>`;});
-   return base(p,c,t)+hd(p,th)+T3(th,h,p)+ava(p,t);};}
+   return base(p,c,t)+hd(p,th)+props(p,c,t,'back')+T3(th,h,p)+props(p,c,t,'front')+ava(p,t);};}
 });
 
 // ====== 13 vp-line：走势线 ======
@@ -310,7 +310,7 @@ S('vp-photo',{real:()=>true,minDur:1.2,
    h+=`<div class="v-abs" style="left:0;top:0;width:${W}px;height:${ZH}px;perspective:1500px"><div class="vp-win" style="left:50px;top:${top}px;width:980px;height:${hh}px;transform-origin:100% 50%;transform:rotateY(${f1(-62*(1-k)-5)}deg) rotateZ(1.2deg);opacity:${f3(c01(th*9))}"><img src="${p.img}" style="object-position:${p.pos??'50% 40%'}"></div></div>`;
    tags.forEach((g,i)=>{const kk=oe((t-ts[i])/.22);if(kk>0)h+=`<div class="vp-tag" style="left:${78+i*26}px;top:${f1(top+hh-70-(tags.length-1-i)*96)}px;transform:rotate(${i%2?2:-2}deg) scale(${f3(kk)})"><i></i>${g.text}</div>`;});
    if(p.source)h+=`<div class="v-cap" style="left:62px;top:${top+hh+26}px">${p.source}</div>`;
-   return h+ava(p,t);};}
+   return h+props(p,c,t,'front')+ava(p,t);};}
 });
 
 // ====== 15 vp-quote：一句引语（没有抠像时用） ======
@@ -335,7 +335,7 @@ S('vp-timeline',{real:()=>false,minDur:2,
    h+=`<div class="vp-tl" style="left:128px;top:${top}px;height:${f1(Math.min(reach,(n-1)*sp+60))}px"></div>`;
    its.forEach((it,i)=>{const k=tail(t-ts[i]+.05,.1);if(k<=0)return;const y=top+i*sp;
     h+=`<i class="vp-dot${it.hl?' hl':''}" style="${KV(it.c??i)}left:106px;top:${f1(y+26)}px;transform:scale(${f3(oe((t-ts[i]+.05)/.2))})"></i><div class="vp-tli${it.hl?' hl':''}" style="${KV(it.c??i)}left:${f1(190+(1-k)*900)}px;top:${f1(y)}px;height:${f1(sp-40)}px;transform:${Z(it.hl?56:0)}"><u>${it.date}</u><b style="font-size:${fitH(it.text,70,750)}px">${it.text}</b>${it.sub?`<s>${it.sub}</s>`:''}</div>`;});
-   return base(p,c,t)+hd(p,th)+T3(th,h,p)+ava(p,t);};}
+   return base(p,c,t)+hd(p,th)+props(p,c,t,'back')+T3(th,h,p)+props(p,c,t,'front')+ava(p,t);};}
 });
 
 // ====== 17 vp-share：占比（一个圆环） ======
@@ -359,7 +359,7 @@ S('vp-rank',{real:()=>false,minDur:1.5,
   return t=>{const th=t-c.t0;let h='';
    its.forEach((it,i)=>{const k=tail(t-ts[i]+.05,.1);if(k<=0)return;const g=oc((t-ts[i])/.8),bw=Math.max(30,620*numOf(it.value)/mx)*g;
     h+=`<div class="vp-rk${it.hl?' hl':''}" style="${KV(it.c??i)}left:${f1(60-(1-k)*900)}px;top:${f1(top+i*(rh+22))}px;height:${f1(rh)}px;transform:${Z(it.hl?56:0)}"><span>${i+1}</span><b style="font-size:${fitH(it.name,66,250)}px">${it.name}</b><i style="width:${f1(bw)}px"></i><em>${cnt(it.value,g)}</em></div>`;});
-   return base(p,c,t)+hd(p,th)+T3(th,h,p)+ava(p,t);};}
+   return base(p,c,t)+hd(p,th)+props(p,c,t,'back')+T3(th,h,p)+props(p,c,t,'front')+ava(p,t);};}
 });
 
 // ====== 19 vp-chapter：分段的小标题 ======
