@@ -1,6 +1,6 @@
 ﻿---
 name: wallstreet-explainer
-description: 华尔街式的财经/科技解读短片（1–3 分钟，16:9 横屏和 9:16 竖屏两种画幅，风格学自小Lin说；用户说竖屏、9:16、小红书、抖音、手机看，就走竖屏版 kit/VERTICAL.md：29 个 v- 场景照着填），两种模式按有没有真人视频自动选：用户给了口播视频（真人或数字人，一个机位）就走真人口播模式——她是片子的"地面"，证据挂到她身后的墙上、关键词她身后换成织物舞台和巨字、讲证据时缩进圆窗或竖窗再长回全屏；没给就走无人动效包装模式——当事人实拍抠像站在巨字前面。两种模式共用：真实的人、新闻原文和官方画面作证据，图形（照片圆盘、金色大数字、柱子、图表、金价线、因果链）只演钱和关系，细斜纹深蓝织物底，克制的 2.5D，每一镜接住上一镜。模板档（镜头表 + render.mjs --check 自检）和手写档。工具：找片下片、图库搜下（Pexels/Pixabay 空镜）、比喻物件生图、新闻截图和荧光笔、逐帧抠像、口播逐字对齐、配音时间线、逐帧渲染、合成音效、混音。用户说"wallstreet-explainer""wallstreet-presenter""像《AI到底有多烧钱》那样""做一条财经/科技解读""真人口播财经""小Lin说那种""我有口播视频，帮我包装成财经解读""把一笔账讲清楚"时使用。
+description: 华尔街式的财经/科技解读视频（覆盖 30 秒–3 分钟短片与 5–10 分钟中长深度片，16:9 横屏和 9:16 竖屏两种画幅，风格学自小Lin说；用户说竖屏、9:16、小红书、抖音、手机看，就走竖屏版 kit/VERTICAL.md：29 个 v- 场景照着填），两种模式按有没有真人视频自动选：用户给了口播视频（真人或数字人，一个机位）就走真人口播模式——她是片子的"地面"，证据挂到她身后的墙上、关键词她身后换成织物舞台和巨字、讲证据时缩进圆窗或竖窗再长回全屏；没给就走无人动效包装模式——当事人实拍抠像站在巨字前面。两种模式共用：结构化选题压缩与审稿、真实的人、新闻原文和官方画面作证据，图形（照片圆盘、金色大数字、柱子、图表、金价线、因果链）只演钱和关系，细斜纹深蓝织物底，克制的 2.5D，每一镜接住上一镜。模板档（镜头表 + render.mjs --check 自检）和手写档。工具：找片下片、图库搜下（Pexels/Pixabay 空镜）、比喻物件生图、新闻截图和荧光笔、逐帧抠像、口播逐字对齐、配音时间线、逐帧渲染、合成音效、混音。用户说"wallstreet-explainer""wallstreet-presenter""像《AI到底有多烧钱》那样""做一条财经/科技解读""真人口播财经""小Lin说那种""我有口播视频，帮我包装成财经解读""把一笔账讲清楚"时使用。
 ---
 
 # 华尔街式财经解读（wallstreet-explainer）
@@ -99,8 +99,8 @@ python scripts/mix.py <片子目录> --check
 
 | 站 | 做什么 | 给用户看什么 |
 |---|---|---|
-| 0 选题 | 题目要同时满足“现在热”和“看完能带走点什么”；事实先查清、留链接；建事实账本 `<片子>/facts.md`（`references/facts_template.md`），来源分级见 `references/research.md` | 两三个题目，每个附一句钩子 |
-| 1 文案 | 口语、第一人称，句句往下接；数字写成读法；**台词里的每个数字都要有账本编号**；插原声的地方先写铺垫句（`references/audio.md`） | 全文。点头之前不做正式配音 |
+| 0 选题 | 先按 `references/scripting.md` 定目标时长档位（30–90 秒 / 1.5–3 分钟 / 5–10 分钟），把题目压成「核心因果问题 + 唯一隐藏变量 + 3–6 步箭头机制链」；中长片必建 `<片子>/brief.md`（`references/brief_template.md`）并至少查 1 条权威反方/边界证据（`C01`）；事实查清、留完整 https 链接和日期，建事实账本 `<片子>/facts.md`（`references/facts_template.md`），来源分级与开页留痕见 `references/research.md` | 两三个题目或定稿选题骨架（核心问题、隐藏变量、机制链、开头钩子；长片附章节规划） |
+| 1 文案 | 按 `references/scripting.md` 写稿或做初稿诊断改写（默认松弛聊天口播感：1 个贯穿生活比喻 + 术语翻人话 + 镜头呼吸反问，口语第一人称、句句往下接、去 AI 腔）；交稿前过 8 维审稿清单并用 `facts_check.py` 扫链接/日期/套话；**台词里的每个数字都要有账本编号**；插原声前先写铺垫句（`references/audio.md`） | 全文（附核查状态）。点头之前不做正式配音 |
 | 2 导演表 | 见下面“导演表”一节。模板档在“手法”一列写场景名；每一镜的素材从哪来也写上 | 要点：开头怎么抓人、每处怎么接、要不要加铺垫句、哪几处用当事人抠像 |
 | 3 素材 | 官方高清片 → 新闻原文 → 当事人原声 → 当事人抠像用的整段实拍（没有切点、有对得上台词的动作）；空镜和气氛镜用 Pexels/Pixabay 图库（`stock.py`）。先拼联系表看过，再定入点，逐帧查切点；单段只截要用的几秒（`references/sourcing.md`） | 3–4 张关键样帧（真素材 + 版式），方向对了再做整片 |
 | 4 配音和时间线 | 先用 `scripts/temp_voice.py` 出临时语音，或用 `scripts/timeline_stub.mjs` 按字数估出时间线，画面全部挂在字上；换正式配音后重新对齐 | — |
@@ -173,7 +173,8 @@ node scripts/render.mjs --dir <片子目录> --video --h 720
 | 竖屏版（9:16）：一屏长什么样、29 个场景怎么选怎么填、一条片怎么排 | `kit/VERTICAL.md` |
 | 真人怎么融进来：七种样子、怎么走、挂墙、景别、声音 | `references/presenter.md`（先读） |
 | 必须守的规则（编号、能检查）、“这句话 → 场景”决策表 | `references/rules.md` |
-| 查资料、来源分级、写事实账本、查不到怎么回改 | `references/research.md` + `references/facts_template.md` |
+| 选题压缩、短/中长片写稿、初稿诊断改写、8 维审稿清单 | `references/scripting.md` + `references/brief_template.md` |
+| 查资料、来源分级、反方边界、开页留痕、写事实账本、查不到怎么回改 | `references/research.md` + `references/facts_template.md` + `scripts/facts_check.py` |
 | 数字主持人/AI 视频怎么生成、选路、验收 | `references/ai-presenter.md` + `references/h3-prompt/` |
 | 故事段选段、横屏编排、插回主片 | `references/story-mode.md` + `vendor/bighead-collage/`（SKILL/style-card/references） |
 | 每期画法设计、道具画风/生图/挂载点 | `references/treatment.md` + `references/prop-styles.md` + `kit/prop_styles.json` |

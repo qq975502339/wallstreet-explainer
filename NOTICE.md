@@ -18,11 +18,19 @@
 
 `vendor/bighead-collage/` 为整份 vendoring（横屏改造），MIT 许可证与字体 OFL 许可证随附于该目录（LICENSE、scripts/fonts/OFL-*.txt）。参考图/素材权利按上游 README 与各自来源。
 
-## 4 字体
+## 4 NBrangerF/xiao-lin-shuo-skill（MIT）
+
+本项目 `references/scripting.md` 与 `references/brief_template.md` 借鉴并按本项目口径重写了该仓库（https://github.com/NBrangerF/xiao-lin-shuo-skill ，MIT License，Copyright (c) 2026）的解释型写稿方法论（问题压缩三件套、7 类财经机制库、5 类母题骨架、短/中长片结构与 8 维审稿维度）。**未合入**：其 Python 词频/语料脚本、固定口头禅示例、语料索引与剧集拆解全文。
+
+## 5 Asaceoo/deep-research-plus-skills（MIT，仅限编排层）
+
+本项目 `references/research.md`、`references/facts_template.md` 与 `scripts/facts_check.py` 借鉴并独立重写了该仓库编排层（https://github.com/Asaceoo/deep-research-plus-skills ，MIT License，Copyright (c) 2026 asaceoo）的证据防错机制（反方证据、承重结论开页留痕、单源/当事方自述标注、补搜上限、链接/日期/死链与 AI 腔检查）。**未合入**：其 5-YAML 调研报告流水线、发版/打包工具，以及其 `sub-skills/` 目录下未随附 MIT 许可的第三方子技能。
+
+## 6 字体
 
 kit 外部字体目录（scripts/local.json fonts_dir）：Bebas Neue / Montserrat（OFL）、MiSans（小米免费商用许可）、Alimama ShuHeiTi（阿里免费商用许可）——各自许可文本随字体来源；vendor/bighead 字体为 OFL（随附）。
 
-## 5 本项目自有
+## 7 本项目自有
 
 kit 引擎其余部分、scripts 其余工具、references 其余文档为本项目自有创作。
 

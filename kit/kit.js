@@ -483,10 +483,13 @@ async function use(F){
    if(s.enter.startsWith('push')&&s.scene!=='person')warn(`${tag}用了 push（横推）：横推是"换一个并列的主角来说"（人换人最典型，两镜都是 person 最稳；公司换公司、并列的两件事也算）。这一镜是换主角吗？是就留着，不是就改 cut 或 blur`);
    const ph=[...scanImgs(s.p)].filter(x=>x.includes('assets/kit/ph/'));if(ph.length)warn(`${tag}还在用 ${ph.length} 个占位素材（assets/kit/ph/）：成片之前换成真素材`);
   });
+  // 配额上限：≤4 分钟守原短片上限；>4 分钟按每多 3 分钟放宽 1 档，酒红底按每 5 分钟最多 1 段
+  const extra=dur>240?Math.ceil((dur-240)/180):0;
+  const maxRolls=2+extra,maxWine=1+Math.floor(Math.max(0,dur-1)/300),maxSt=3+extra,maxCh=3+extra;
   const rolls=out.filter(s=>s.p.roll||s.p.total||(s.p.steps??[]).some(x=>x.roll)).length;
-  if(rolls>2)warn(`全片有 ${rolls} 处滚数（number.roll、chart.total、board 的 roll）：只在"累加"本身就是意思的时候滚，一条片一两次`);
+  if(rolls>maxRolls)warn(`全片有 ${rolls} 处滚数（number.roll、chart.total、board 的 roll；当前片长上限 ${maxRolls}）：只在"累加"本身就是意思的时候滚`);
   const wine=out.filter((s,i)=>s.p.tone==='wine'&&!(i&&out[i-1].p.tone==='wine')).length;
-  if(wine>1)warn(`全片有 ${wine} 段酒红底（tone:'wine'）：酒红一条片最多一段，留给"算总账 / 亏钱"那一段，其余用 navy`);
+  if(wine>maxWine)warn(`全片有 ${wine} 段酒红底（tone:'wine'；当前片长上限 ${maxWine}）：留给"算总账 / 亏钱"那一段，其余用 navy`);
   // 开口要快
   const b0=F.T.beats?.[0];
   if(b0&&b0.start>.5)warn(`第一句 ${b0.start.toFixed(2)} 秒才开口：0.5 秒内就要开口（script.json 的 pre 不超过 0.35）`);
@@ -501,8 +504,8 @@ async function use(F){
   out.forEach((s,i)=>{const p=s.p;for(const n of [...A(p.nodes),...A(p.items),...A(p.cards)])if(n&&typeof n==='object')note(n.name??n.title,n.color,i);
    note(p.left?.title,p.left?.color,i);note(p.right?.title,p.right?.color,i);note(p.who?.name,p.who?.color,i);if(s.scene==='profile')note(p.name,p.color,i);});
   for(const k in seen){const cs=Object.keys(seen[k]);if(cs.length>1)warn(`「${k}」在不同镜头里用了 ${cs.length} 种颜色（${cs.map(cc=>`${cc}：第 ${[...new Set(seen[k][cc])].join('、')} 镜`).join('；')}）：同一家公司全片同一个颜色，color 直接写公司名最稳`);}
-  const nst=out.filter(s=>s.scene==='statement').length;if(nst>3)warn(`全片 ${nst} 句金句（statement）：一条片两三次，多了就不金了`);
-  const nch=out.filter(s=>s.scene==='title'&&s.p.kind==='chapter').length;if(nch>3)warn(`全片 ${nch} 张章节卡：一条片最多三张`);
+  const nst=out.filter(s=>s.scene==='statement').length;if(nst>maxSt)warn(`全片 ${nst} 句金句（statement；当前片长上限 ${maxSt}）：多了就不金了`);
+  const nch=out.filter(s=>s.scene==='title'&&s.p.kind==='chapter').length;if(nch>maxCh)warn(`全片 ${nch} 张章节卡（当前片长上限 ${maxCh}）`);
   // 竖屏片的导演自检：全片最重的一镜、她露脸的比例、证据别连太多、质感靠图
   if(out.length>=5&&out.every(s=>SCENES[s.scene].vert)){
    const hs=out.map((s,i)=>s.p.hero?i+1:0).filter(Boolean);

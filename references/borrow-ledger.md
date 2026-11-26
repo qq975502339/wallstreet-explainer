@@ -17,6 +17,7 @@
 | `bcc635e`+`fc9baa2`（B 层） | zenskill 思路+数据（自有重写）；howoneai MIT 文档 lineage | shot-grammar（12 句型+§1B 全 42 场景触发）/ reference-evidence / visual-checklist / layout-mapping / research 补 / treatment 补 / NOTICE / 本台账 | 分镜靠感觉、节奏无尺子、规则无判例、审片无清单、许可声明缺失 | 文档审读；42/42 机器核；tests 全绿 | revert |
 | `d76378d`（A 核心） | zenskill scripts（独立重写） | A1 aroll 体检 / A3 marks+check_cuts 覆盖门禁 / A4 检查包 / A5 章节预览+封面+分享 / A6 draft 按 B 表 / A7 流式 freeze-black-silence；verify --beat-json | 全片错半拍 / 穿帮裸奔 / 漏检 / 交付手工 | 19 测试绿；dup/fix/voice/marks/audit exit1/章节预览实测 | revert |
 | `a7033d9`（A2+A7 件） | zenskill fetch_footage（移植）+ 自建 | A2 八源检索+ND/NC/Editorial 排除+credits 登记+audit 缺许可 fail；selftest；music_candidates；SKILL/review 挂钩 | 侵权/漏署名/新环境踩坑/音乐盲选 | wikimedia 实搜带许可；缺许可 audit exit1；selftest 20 过 | revert |
+| 上游写稿+查证防错+长片适配 | xiao-lin-shuo-skill（MIT）+ deep-research-plus 编排层（MIT）+ 自有重写 | `references/scripting.md`（短/中长片三档、问题压缩、7 机制库、5 母题、初稿改写、8 维审稿）；`brief_template.md`；`research.md`/`facts_template.md`（反方 `C01`/开页留痕/单源与自述口径/补搜封顶 2 轮）；`facts_check.py`（https/日期/死链/AI 腔/长片提醒）；`kit/kit.js`+`rules.md`（>4 分钟动态配额） | 稿件堆事实无机制链 / 确认偏误 / 裸域名与死链 / AI 腔套话 / 中长片配额误报 | `tests/test_facts_and_quotas.py` + `pytest` + `selftest.py` 全绿 | revert |
 
 ## 被回滚 / 未接的备选池（不在仓库，按需重放）
 
@@ -33,4 +34,4 @@
 
 ## 许可
 
-见 `NOTICE.md`：howoneai MIT（保留声明）；zenskill 无 LICENSE→只借思路与数据、自有重写；bighead MIT+OFL 随附；字体各自许可。
+见 `NOTICE.md`：howoneai MIT（保留声明）；zenskill 无 LICENSE→只借思路与数据、自有重写；bighead MIT+OFL 随附；xiao-lin-shuo-skill MIT（方法论自有重写）；deep-research-plus 编排层 MIT（防错机制自有重写，不含其 sub-skills）；字体各自许可。
