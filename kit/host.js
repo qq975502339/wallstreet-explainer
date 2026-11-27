@@ -127,11 +127,11 @@ async function use(K,o={}){
  function winWrap(base,t0,pf,prevF){
   const P=PANEL,sc=P.w/1920;
   return t=>{
-   const u=t-t0;if(HOST.calm){const v=winView(t);return `<div class="k-full">${stage({tone:'navy'})}</div><div class="k-full" style="background:radial-gradient(ellipse at 50% 50%,transparent 40%,#0008)"></div><div class="h-panel" style="left:${f1(P.x)}px;top:${f1(P.y)}px;width:${P.w}px;height:${P.h}px;border-radius:${P.r}px"><div style="position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;transform:scale(${f3(sc)})">${base(t)}</div></div><div class="k-full" style="z-index:70">${winHTML(t,v.box,{s:v.s,c:v.c})}</div>`;}
+   const u=t-t0;if(HOST.calm){const v=winView(t);return `<div class="k-full">${stage({tone:'navy',t})}</div><div class="k-full" style="background:radial-gradient(ellipse at 50% 50%,transparent 40%,#0008)"></div><div class="h-panel" style="left:${f1(P.x)}px;top:${f1(P.y)}px;width:${P.w}px;height:${P.h}px;border-radius:${P.r}px"><div style="position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;transform:scale(${f3(sc)})">${base(t)}</div></div><div class="k-full" style="z-index:70">${winHTML(t,v.box,{s:v.s,c:v.c})}</div>`;}
    const pk=pf==='window'?1:E(C((u-.12)/.42)),v=pf==='room'&&u<.5?morph(fullView(),winView(t),IO(u/.5)):pf==='pip'&&u<.45?morph(pipView(t),winView(t),IO(u/.45)):winView(t);
    const k=C(u/.32),from=pf==='room'&&k<1&&prevF?`<div class="k-full" style="z-index:71;opacity:${f3(1-k)}">${lookIn(v.box,v,MV.still(prevF,t))}</div>`:'';
    const panel=`<div class="h-panel" style="left:${f1(P.x)}px;top:${f1(P.y)}px;width:${P.w}px;height:${P.h}px;border-radius:${P.r}px;opacity:${f3(pk)};transform:translateX(${f1((1-pk)*-90)}px)"><div style="position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;transform:scale(${f3(sc)})">${base(t)}</div></div>`;
-   return `<div class="k-full">${stage({tone:'navy'})}</div><div class="k-full" style="background:radial-gradient(ellipse at 50% 50%,transparent 40%,#0008)"></div>${panel}<div class="k-full" style="z-index:70">${winHTML(t,v.box,{s:v.s,c:v.c})}</div>${from}`;
+   return `<div class="k-full">${stage({tone:'navy',t})}</div><div class="k-full" style="background:radial-gradient(ellipse at 50% 50%,transparent 40%,#0008)"></div>${panel}<div class="k-full" style="z-index:70">${winHTML(t,v.box,{s:v.s,c:v.c})}</div>${from}`;
   };
  }
  return K;
@@ -166,7 +166,7 @@ KIT.scene('host',{
     let mg='';if(ws.length===1)mg=S25.mega(ws[0],{x:hx,y:top,size,anchor:'c',m:gm,s:lerp(1.12,1,g),o:g});
     else mg=S25.mega(ws[0],{x:hx-gap,y:top,size,anchor:'r',m:gm,s:lerp(1.12,1,g),o:g})+S25.mega(ws[1],{x:hx+gap,y:top,size,anchor:'l',m:gm,s:lerp(1.12,1,g),o:g});
     const bw=sw.brow?`<div class="s25brow" style="left:${f1(hx-gap-K2.megaW(ws[0]??'',size)+16)}px;top:${f1(top+size*.62)}px;opacity:${f3(g)}"><b>${sw.brow}</b>${sw.en?`<i>${sw.en}</i>`:''}</div>`:'';
-    back=`<div style="position:absolute;left:-480px;top:-270px;width:2880px;height:1620px">${stage({tone:'navy',glow:sw.glow??'#c9a25a',gx:'50%',gy:'38%',go:.3})}</div>${mg}${bw}`;
+    back=`<div style="position:absolute;left:-480px;top:-270px;width:2880px;height:1620px">${stage({tone:'navy',glow:sw.glow??'#c9a25a',gx:'50%',gy:'38%',go:.3,t})}</div>${mg}${bw}`;
     // 换的那一帧推一下（参考片：换背景时机位没动，只是字从小长大；这里加 2% 的推，让"换"这一下有重量）
     if(!HOST.calm)cam={...cam,s:cam.s*(1+.02*E((t-sw.t)/.5))};
     return roomHTML(t,cam,{back,mid:' ',cut:true})+`<div class="k-full" style="z-index:12;background:radial-gradient(ellipse 60% 70% at 50% 45%,transparent 50%,#000a)"></div>`;

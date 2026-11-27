@@ -449,8 +449,8 @@ async function use(F){
    if(enN&&!def.vert)c.warn(`${enN} 个圆盘 / 节点 / 卡片 / 表头写了 en（英文小字）：英文小字只跟着眉题和片名，别处删掉`);
    if(sp.brow&&A(sp.nodes).some(n=>n.type==='num'&&n.brow))c.warn('整张图的 brow 和 num 节点的 brow 同时写了：一帧最多一组眉题');
    if(enter==='flat'&&c.prev&&!(typeof def.flat==='function'?def.flat(p):def.flat))c.warn(`enter:'flat'（上一镜倒成桌面）只给"站在桌面上"的场景用（${Object.keys(SCENES).filter(k=>SCENES[k].flat).join('、')}；title、statement 不带 items 时）；${sp.scene} 铺满画面，会和倒下去的上一镜叠在一起，改用 cut 或 blur`);
-   // 背景：enter:'flat' 时是上一镜倒下去的桌面，否则是这一镜自己的舞台（传入 t 驱动双层暗格无缝漂移）
-   c.bg=(t,cam,camp,o={})=>enter==='flat'&&c.prev?MV.layFlat(t,{t0:c.t0,d:.7,html:MV.still(c.prev,c.t0-.01),why:sp.says}):L(cam,camp,o.z??.25,o.html??stage({...o,t}),{zi:0});   // 底层 z-index:0，写在后面的东西自然盖在上面
+   // 背景：enter:'flat' 时是上一镜倒下去的桌面；其余舞台底固定在全屏 z=0（不随各镜 cam 跳位/缩放），仅凭全局时间 t 驱动暗格全片绝对连续无缝漂移
+   c.bg=(t,cam,camp,o={})=>enter==='flat'&&c.prev?MV.layFlat(t,{t0:c.t0,d:.7,html:MV.still(c.prev,c.t0-.01),why:sp.says}):(o.html?L(cam,camp,o.z??.25,o.html,{zi:0}):`<div class="k-full" style="z-index:0">${stage({...o,t})}</div>`);
    if(def.prep)await def.prep(p,c);
    def.check?.(p,c);
     // 画法规矩（v1.4）：图形场景至少一样本期专属物，否则像 PPT 模板（提醒不是禁令）
