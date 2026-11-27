@@ -137,15 +137,15 @@ function fx(st={},base='translate(-50%,-50%)'){
  const tr=`${base}${st.dy?` translateY(${f1(st.dy)}px)`:''}${st.dx?` translateX(${f1(st.dx)}px)`:''}${st.sc!=null&&Math.abs(st.sc-1)>.0005?` scale(${f3(st.sc)})`:''}`;
  return `transform:${tr};${f.length?`filter:${f.join(' ')};`:''}${st.o!=null&&st.o<.999?`opacity:${f3(C(st.o))};`:''}`;
 }
-// 舞台底：极简石墨 G2 双层精密暗格，底光明暗稳住不动，仅双层暗格随时间 t 向右上方无缝漂移（主格 120px 正好是细格 24px 的 5 倍，mod 120 零接缝）。
+// 舞台底：极简石墨 G2 双层精密暗格，底光明暗稳住不动，仅双层暗格通过 translate3d 按 30px/s（30fps 下每帧精确 +1px, -1px）向右上方 45° 绝对匀速无缝漂移。
 // o.tone 底色（navy / charcoal / wine）；o.tint 品牌色染色（person 用）；o.glow 颜色光；o.t 当前秒数（驱动网格无缝移动）
 function stage(o={}){
  let a,b,m;
  if(o.tint){const c=col(o.tint);a=mixc(c,'#04060b',.46);b=mixc(c,'#020306',.9);m=mixc(a,b,.55);}
  else [a,b,m]=TONE[o.tone]??TONE.navy;
  const g=o.glow?col(o.glow):null,tt=o.t??0;
- const tx=f2((tt*32)%120),ty=f2(-((tt*20)%120));
- const gx=o.gx??'50%',gy=o.gy??'46%';
+ const tx=f2((tt*30)%120),ty=f2(-((tt*30)%120));
+ const gx=(g||o.tint)?(o.gx??'50%'):'50%',gy=(g||o.tint)?(o.gy??'46%'):'46%';
  return `<div class="k-stage" style="--a:${a};--m:${m??b};--b:${b};--gx:${gx};--gy:${gy};--tx:${tx}px;--ty:${ty}px${g?`;--g:${alpha(mixc(g,'#ffffff',.3),o.go??.34)}`:''}"><div class="tex"></div>${g?'<div class="glow"></div>':''}${o.rings?'<div class="rings"></div>':''}</div>`;
 }
 // 照片圆盘：{x,y,r,color,name,en,photo,pos(照片的 object-position),logo(白色单色 logo 图),gray}

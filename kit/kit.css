@@ -25,14 +25,15 @@
    底色只有 navy（默认石墨 G2）/ charcoal（暖哑光深碳）/ wine（勃艮第暗酒红）；person 用品牌色染（kit.js 的 stage）。
    颜色光 .glow 默认不画，只有 person 身后有一团品牌色（一大片很淡的椭圆，不是一团亮光） */
 .k-stage{position:absolute;left:-50%;top:-50%;width:200%;height:200%;overflow:hidden;background:radial-gradient(ellipse 50% 45% at var(--gx,50%) var(--gy,46%),var(--a) 0%,var(--m,var(--b)) 58%,var(--b) 100%)}
-.k-stage>.tex{position:absolute;inset:0;
+.k-stage>.tex{position:absolute;inset:-120px;
  background-image:
   linear-gradient(rgba(220,228,240,.125) 1px,transparent 1px),
   linear-gradient(90deg,rgba(220,228,240,.125) 1px,transparent 1px),
   linear-gradient(rgba(220,228,240,.04) 1px,transparent 1px),
   linear-gradient(90deg,rgba(220,228,240,.04) 1px,transparent 1px);
  background-size:120px 120px,120px 120px,24px 24px,24px 24px;
- background-position:var(--tx,0px) var(--ty,0px)}
+ transform:translate3d(var(--tx,0px),var(--ty,0px),0);
+ will-change:transform}
 .k-stage>.glow{position:absolute;inset:0;background:radial-gradient(ellipse 760px 560px at var(--gx,50%) var(--gy,47%),var(--g) 0%,transparent 100%)}
 .k-stage>.rings{position:absolute;inset:0;background:repeating-radial-gradient(circle at var(--gx,50%) var(--gy,47%),rgba(255,255,255,.035) 0 2px,transparent 2px 96px);mix-blend-mode:screen}
 .k-vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 84% 80% at 50% 46%,transparent 42%,rgba(4,5,7,.66) 100%)}
