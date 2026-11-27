@@ -21,14 +21,21 @@
 .k-abs{position:absolute}
 .k-full{position:absolute;inset:0}
 
-/* ---------- 舞台底：很细的斜纹织物染成这一段的底色，中间略亮、四周压暗（不假装是真实场景） ----------
-   底色只有 navy（默认）/ charcoal / wine；person 用品牌色染（kit.js 的 stage）。织物按原尺寸平铺（3.2px 的斜纹缩放了会糊或起摩尔纹）。
+/* ---------- 舞台底：极简石墨双层精密暗格（G2 清晰版：120px 主格 + 24px 细格，随时间 t 无缝斜向微漂） ----------
+   底色只有 navy（默认石墨 G2）/ charcoal（暖哑光深碳）/ wine（勃艮第暗酒红）；person 用品牌色染（kit.js 的 stage）。
    颜色光 .glow 默认不画，只有 person 身后有一团品牌色（一大片很淡的椭圆，不是一团亮光） */
-.k-stage{position:absolute;left:-50%;top:-50%;width:200%;height:200%;overflow:hidden;background:radial-gradient(ellipse 30% 30% at var(--gx,50%) var(--gy,48%),var(--a) 0%,var(--b) 100%)}
-.k-stage>.tex{position:absolute;inset:0;background:url(../assets/kit/fabric.jpg) 0 0/1024px 1024px;mix-blend-mode:overlay}
+.k-stage{position:absolute;left:-50%;top:-50%;width:200%;height:200%;overflow:hidden;background:radial-gradient(ellipse 50% 45% at var(--gx,50%) var(--gy,46%),var(--a) 0%,var(--m,var(--b)) 58%,var(--b) 100%)}
+.k-stage>.tex{position:absolute;inset:0;
+ background-image:
+  linear-gradient(rgba(220,228,240,.125) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(220,228,240,.125) 1px,transparent 1px),
+  linear-gradient(rgba(220,228,240,.04) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(220,228,240,.04) 1px,transparent 1px);
+ background-size:120px 120px,120px 120px,24px 24px,24px 24px;
+ background-position:var(--tx,0px) var(--ty,0px)}
 .k-stage>.glow{position:absolute;inset:0;background:radial-gradient(ellipse 760px 560px at var(--gx,50%) var(--gy,47%),var(--g) 0%,transparent 100%)}
 .k-stage>.rings{position:absolute;inset:0;background:repeating-radial-gradient(circle at var(--gx,50%) var(--gy,47%),rgba(255,255,255,.035) 0 2px,transparent 2px 96px);mix-blend-mode:screen}
-.k-vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 80% 76% at 50% 46%,transparent 48%,rgba(0,0,0,.5) 100%)}
+.k-vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 84% 80% at 50% 46%,transparent 42%,rgba(4,5,7,.66) 100%)}
 .k-grain{position:absolute;inset:0;pointer-events:none;background:url(../assets/kit/grain.png) 0 0/360px;mix-blend-mode:overlay;opacity:.14}
 
 /* ---------- 大数字：金色渐变 Bebas Neue；货币符号和数字差不多高，中文单位用数黑体（同一个金色） ---------- */

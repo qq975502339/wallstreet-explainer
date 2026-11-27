@@ -28,9 +28,9 @@ const BRAND={google:'blue',谷歌:'blue',microsoft:'steel',微软:'steel',amazon
  oracle:'brick',甲骨文:'brick',apple:'gray',苹果:'gray',tesla:'red',特斯拉:'red',spacex:'slate',xai:'black',anthropic:'orange',alibaba:'orange',阿里:'orange',阿里巴巴:'orange',
  tencent:'sky',腾讯:'sky',bytedance:'cyan',字节:'cyan',字节跳动:'cyan',huawei:'red',华为:'red',tsmc:'brick',台积电:'brick',amd:'red',intel:'sky',英特尔:'sky',
  broadcom:'red',博通:'red',samsung:'navy',三星:'navy',softbank:'gold',软银:'gold',美联储:'navy',fed:'navy'};
-// 舞台底色（中心、四周）。整屏底色只有这三种：navy 默认；charcoal 中性的炭灰；wine 压暗、低饱和的酒红，一条片最多一段（算总账 / 亏钱）。
-// 都是同一张斜纹织物染色。公司的品牌色不当整屏底色，只在 person（人身后）染织物；写了别的 tone 按 navy 画，--check 提醒。
-const TONE={navy:['#2e3a55','#0b1019'],charcoal:['#36393f','#0b0b0d'],wine:['#5a2f3c','#120a0d']};
+// 舞台底色（中心、四周、中段过渡）。默认 navy 为极简石墨 G2；charcoal 暖哑光深碳；wine 勃艮第暗酒红（算总账 / 亏钱，一条片最多一段）。
+// 公司的品牌色不当整屏底色，只在 person（人身后）染色；写了别的 tone 按 navy 画，--check 提醒。
+const TONE={navy:['#24272d','#090a0c','#121418'],charcoal:['#262523','#0b0b0a','#131211'],wine:['#381b23','#0b0507','#1a0c10']};
 const col=c=>{if(!c)return COLORS.steel;if(c[0]==='#'||c.startsWith('rgb'))return c;const k=String(c).toLowerCase();return COLORS[k]??COLORS[BRAND[k]??BRAND[c]]??COLORS.steel;};
 const rgb=h=>{h=col(h).replace('#','');if(h.length===3)h=[...h].map(x=>x+x).join('');return [0,2,4].map(i=>parseInt(h.slice(i,i+2),16));};
 const mixc=(a,b,k)=>{const x=rgb(a),y=rgb(b);return '#'+x.map((v,i)=>Math.round(v+(y[i]-v)*k).toString(16).padStart(2,'0')).join('');};
@@ -137,14 +137,16 @@ function fx(st={},base='translate(-50%,-50%)'){
  const tr=`${base}${st.dy?` translateY(${f1(st.dy)}px)`:''}${st.dx?` translateX(${f1(st.dx)}px)`:''}${st.sc!=null&&Math.abs(st.sc-1)>.0005?` scale(${f3(st.sc)})`:''}`;
  return `transform:${tr};${f.length?`filter:${f.join(' ')};`:''}${st.o!=null&&st.o<.999?`opacity:${f3(C(st.o))};`:''}`;
 }
-// 舞台底：斜纹织物染成这一段的底色，中间略亮、四周压暗。
-// o.tone 底色（navy / charcoal / wine，别的按 navy）；o.tint 品牌色染织物（person 用）；o.glow 颜色光（默认没有，给了公司名/颜色名才画）；o.gx/o.gy 光的中心
+// 舞台底：极简石墨 G2 双层精密暗格，底光明暗稳住不动，仅双层暗格随时间 t 向右上方无缝漂移（主格 120px 正好是细格 24px 的 5 倍，mod 120 零接缝）。
+// o.tone 底色（navy / charcoal / wine）；o.tint 品牌色染色（person 用）；o.glow 颜色光；o.t 当前秒数（驱动网格无缝移动）
 function stage(o={}){
- let a,b;
- if(o.tint){const c=col(o.tint);a=mixc(c,'#04060b',.46);b=mixc(c,'#020306',.9);}
- else [a,b]=TONE[o.tone]??TONE.navy;
- const g=o.glow?col(o.glow):null;
- return `<div class="k-stage" style="--a:${a};--b:${b};--gx:${o.gx??'50%'};--gy:${o.gy??'48%'}${g?`;--g:${alpha(mixc(g,'#ffffff',.3),o.go??.34)}`:''}"><div class="tex"></div>${g?'<div class="glow"></div>':''}${o.rings?'<div class="rings"></div>':''}</div>`;
+ let a,b,m;
+ if(o.tint){const c=col(o.tint);a=mixc(c,'#04060b',.46);b=mixc(c,'#020306',.9);m=mixc(a,b,.55);}
+ else [a,b,m]=TONE[o.tone]??TONE.navy;
+ const g=o.glow?col(o.glow):null,tt=o.t??0;
+ const tx=f2((tt*32)%120),ty=f2(-((tt*20)%120));
+ const gx=o.gx??'50%',gy=o.gy??'46%';
+ return `<div class="k-stage" style="--a:${a};--m:${m??b};--b:${b};--gx:${gx};--gy:${gy};--tx:${tx}px;--ty:${ty}px${g?`;--g:${alpha(mixc(g,'#ffffff',.3),o.go??.34)}`:''}"><div class="tex"></div>${g?'<div class="glow"></div>':''}${o.rings?'<div class="rings"></div>':''}</div>`;
 }
 // 照片圆盘：{x,y,r,color,name,en,photo,pos(照片的 object-position),logo(白色单色 logo 图),gray}
 // 品牌色实心盘；有 photo 时照片铺满盘、底部压一层品牌色，名字压在盘的下半。lt（文字 logo）不再画，只在没有 name 时当名字用。
@@ -447,8 +449,8 @@ async function use(F){
    if(enN&&!def.vert)c.warn(`${enN} 个圆盘 / 节点 / 卡片 / 表头写了 en（英文小字）：英文小字只跟着眉题和片名，别处删掉`);
    if(sp.brow&&A(sp.nodes).some(n=>n.type==='num'&&n.brow))c.warn('整张图的 brow 和 num 节点的 brow 同时写了：一帧最多一组眉题');
    if(enter==='flat'&&c.prev&&!(typeof def.flat==='function'?def.flat(p):def.flat))c.warn(`enter:'flat'（上一镜倒成桌面）只给"站在桌面上"的场景用（${Object.keys(SCENES).filter(k=>SCENES[k].flat).join('、')}；title、statement 不带 items 时）；${sp.scene} 铺满画面，会和倒下去的上一镜叠在一起，改用 cut 或 blur`);
-   // 背景：enter:'flat' 时是上一镜倒下去的桌面，否则是这一镜自己的舞台
-   c.bg=(t,cam,camp,o={})=>enter==='flat'&&c.prev?MV.layFlat(t,{t0:c.t0,d:.7,html:MV.still(c.prev,c.t0-.01),why:sp.says}):L(cam,camp,o.z??.25,o.html??stage(o),{zi:0});   // 底层 z-index:0，写在后面的东西自然盖在上面
+   // 背景：enter:'flat' 时是上一镜倒下去的桌面，否则是这一镜自己的舞台（传入 t 驱动双层暗格无缝漂移）
+   c.bg=(t,cam,camp,o={})=>enter==='flat'&&c.prev?MV.layFlat(t,{t0:c.t0,d:.7,html:MV.still(c.prev,c.t0-.01),why:sp.says}):L(cam,camp,o.z??.25,o.html??stage({...o,t}),{zi:0});   // 底层 z-index:0，写在后面的东西自然盖在上面
    if(def.prep)await def.prep(p,c);
    def.check?.(p,c);
     // 画法规矩（v1.4）：图形场景至少一样本期专属物，否则像 PPT 模板（提醒不是禁令）
